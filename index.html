@@ -1,157 +1,497 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ma Vitrine WikiMasters</title>
-<style>
-  :root { --bg:#0e0f12; --surface:#18191d; --border:#2a2c33; --fg:#eceef2; --muted:#9ca3af; --accent:#ffb224; }
-  * { box-sizing:border-box; margin:0; }
-  body { font-family:system-ui,sans-serif; background:var(--bg); color:var(--fg); }
-  header { position:sticky; top:0; z-index:10; background:rgba(14,15,18,.92); backdrop-filter:blur(8px);
-           border-bottom:1px solid var(--border); padding:1rem 2rem; display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between; align-items:center; }
-  h1 { font-size:1.4rem; color:var(--accent); }
-  #bar { height:4px; background:var(--border); }
-  #bar>i { display:block; height:100%; width:0; background:var(--accent); transition:width .3s; }
-  #progress { font-size:.8rem; color:var(--muted); }
-  nav { display:flex; gap:.5rem; overflow-x:auto; padding:1rem 2rem; scrollbar-width:none; }
-  nav::-webkit-scrollbar{display:none}
-  .tab { background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:.5rem 1rem;
-         border-radius:20px; cursor:pointer; white-space:nowrap; font-size:.9rem; }
-  .tab.active { background:var(--accent); color:#000; font-weight:600; }
-  main { padding:0 2rem 4rem; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.2rem; }
-  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
-  .imgbox { height:150px; background:#202228; display:flex; align-items:center; justify-content:center; font-size:3rem; color:rgba(255,255,255,.08); font-weight:800; }
-  .imgbox img { width:100%; height:100%; object-fit:cover; }
-  .body { padding:1rem; display:flex; flex-direction:column; gap:.5rem; flex:1; }
-  .title { font-weight:600; line-height:1.3; }
-  .desc { font-size:.82rem; color:var(--muted); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; flex:1; }
-  .foot { display:flex; justify-content:space-between; align-items:center; font-size:.78rem; }
-  .rar { padding:.15rem .5rem; border-radius:5px; font-weight:700; background:rgba(255,255,255,.06); }
-  .r-UR,.r-L { color:#ffd700 } .r-SR { color:#c084fc } .r-R { color:#60a5fa } .r-PC { color:#4ade80 } .r-C { color:#94a3b8 }
-  .stats b { color:var(--muted); font-weight:600; } .atk{color:#f87171}.def{color:#38bdf8}
-  .tags { display:flex; flex-wrap:wrap; gap:.25rem; }
-  .tg { font-size:.68rem; background:rgba(255,178,36,.12); color:var(--accent); padding:.1rem .45rem; border-radius:8px; }
-  a { color:inherit; text-decoration:none; }
-  #empty, #error { grid-column:1/-1; text-align:center; padding:3rem; color:var(--muted); }
-  .btn { background:none; border:1px solid var(--border); color:var(--fg); padding:.4rem .8rem; border-radius:8px; cursor:pointer; font-size:.8rem; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Collections WikiMasters</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f7;
+            color: #1a1a1a;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #1a1a1a;
+        }
+
+        /* Grille des collections */
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .collection-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .collection-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .collection-card.active {
+            border-color: #3b82f6;
+        }
+
+        .collection-card.complete {
+            border-color: #10b981;
+        }
+
+        /* Anneau de progression */
+        .progress-ring {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke-width: 6;
+        }
+
+        .progress-ring .bg {
+            stroke: #e5e7eb;
+        }
+
+        .progress-ring .progress {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .progress-ring .percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .progress-ring .check {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            color: #10b981;
+        }
+
+        /* Infos de la collection */
+        .collection-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .collection-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: #1a1a1a;
+        }
+
+        .collection-stats {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .collection-stats strong {
+            color: #1a1a1a;
+        }
+
+        .collection-meta {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .collection-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Section contenu */
+        .content-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .section-title span {
+            color: #6b7280;
+            font-weight: 400;
+            font-size: 1rem;
+        }
+
+        /* Filtres */
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Sous-collections */
+        .subcollections {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .subcollection-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .subcollection-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .subcollection-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+
+        .subcollection-bar-fill {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .subcollection-stats {
+            font-size: 0.75rem;
+            color: #6b7280;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Grille de cartes */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .card-item {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .card-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .card-item.owned {
+            border-color: #8b5cf6;
+        }
+
+        .card-item.owned.rare {
+            border-color: #f59e0b;
+        }
+
+        .card-item.owned.legendary {
+            border-color: #10b981;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            background: #f3f4f6;
+        }
+
+        .card-info {
+            padding: 0.5rem;
+        }
+
+        .card-year {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .collections-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    </style>
 </head>
 <body>
-<header>
-  <h1>🃏 Ma Vitrine</h1>
-  <div style="display:flex;gap:1rem;align-items:center">
-    <span id="progress"></span>
-    <button id="dl" class="btn" style="display:none">💾 Télécharger cache titres</button>
-  </div>
-</header>
-<div id="bar"><i></i></div>
-<nav id="tabs"></nav>
-<main id="grid"><div id="empty">Chargement…</div></main>
+    <h1>Collections</h1>
 
-<script>
-/* ====== CONFIG : tes collections, basées sur les TAGS de ton export ====== */
-const COLLECTIONS = [
-  { id:'all',       name:'Tout possédé',          tags:null },                 // toutes tes cartes
-  { id:'avendre',   name:'À vendre 💸',            tags:['· A VENDRE 💸'] },
-  { id:'foot',      name:'Foot ⚽',                 tags:['⚽ Foot'] },
-  { id:'vosges',    name:'Vosges ♥️⛰️',            tags:['Vosges ♥️⛰️','xxx. [100%] ✅ Communes des Vosges'] },
-  { id:'cs',        name:'Counter Strike 🔫',      tags:['Counter Strike 🔫'] },
-];
+    <div class="collections-grid" id="collectionsGrid"></div>
 
-const EXPORT_URL = 'ma-vitrine-wikimasters.json';
-const CACHE_URL  = 'titres.json';                 // optionnel, à commiter pour aller vite
-const WM_API     = id => `https://www.wiki-masters.com/api/cards/${id}`;
-const WIKI_API   = t => `https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t)}`;
-const PROXIES    = [u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-                    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`];
-
-let data=[], cache={}, current='all', search='';
-
-/* fetch avec bascule automatique si CORS bloque */
-async function get(url){
-  try { const r=await fetch(url); if(r.ok) return r.json(); throw 0; }
-  catch { for(const p of PROXIES){ try{ const r=await fetch(p(url)); if(r.ok) return JSON.parse(await r.text()); }catch{} } return null; }
-}
-const save = ()=>{ localStorage.setItem('wm_cache', JSON.stringify(cache));
-                  document.getElementById('dl').style.display = Object.keys(cache).length ? '' : 'none'; };
-document.getElementById('dl').onclick = ()=>{
-  const blob = new Blob([JSON.stringify(cache,null,1)],{type:'application/json'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='titres.json'; a.click();
-};
-
-async function init(){
-  cache = JSON.parse(localStorage.getItem('wm_cache')||'{}');
-  let exportData, extra={};
-  try { exportData = await (await fetch(EXPORT_URL)).json(); }
-  catch { document.getElementById('grid').innerHTML='<div id="error">❌ Impossible de charger '+EXPORT_URL+'</div>'; return; }
-  try { extra = await (await fetch(CACHE_URL)).json(); } catch{}          // 404 = pas grave
-  cache = {...extra, ...cache};
-
-  // cartes possédées, dédupliquées par card_id (un titre peut avoir plusieurs exemplaires)
-  const byId = new Map();
-  (exportData.copies||[]).forEach(c => { if(!byId.has(c.card_id)) byId.set(c.card_id, c); });
-  data = [...byId.values()];
-
-  renderTabs();
-  await enrichAndRender();
-}
-
-async function enrichAndRender(){
-  const need = data.filter(c => !cache[c.card_id] || !cache[c.card_id].t);
-  const bar=document.getElementById('bar').firstElementChild, prog=document.getElementById('progress');
-  let done=0;
-  for(const c of need){
-    const wm = await get(WM_API(c.card_id));
-    if(!wm){ cache[c.card_id]={t:'?',broken:true}; continue; }
-    const wki = await get(WIKI_API(wm.wikipedia_title)).catch(()=>null);
-    cache[c.card_id] = { t:wm.wikipedia_title, d:wki?.extract||'', i:wki?.thumbnail?.source||wm.image_url||null };
-    save(); done++;
-    bar.style.width=(done/need.length*100)+'%';
-    prog.textContent=`Résolution des titres… ${done}/${need.length}`;
-  }
-  bar.style.width='0'; prog.textContent='';
-  renderGrid();
-}
-
-function cardIn(col,c){ return col.tags===null || (c.tags||[]).some(t=>col.tags.includes(t)); }
-
-function renderTabs(){
-  const nav=document.getElementById('tabs'); nav.innerHTML='';
-  COLLECTIONS.forEach(col=>{
-    const n=data.filter(c=>cardIn(col,c)).length;
-    const b=document.createElement('button'); b.className='tab'+(col.id===current?' active':'');
-    b.textContent=`${col.name} (${n})`; b.onclick=()=>{current=col.id; renderTabs(); renderGrid();};
-    nav.appendChild(b);
-  });
-}
-
-function renderGrid(){
-  const grid=document.getElementById('grid'); grid.innerHTML='';
-  const col=COLLECTIONS.find(c=>c.id===current);
-  const cards=data.filter(c=>cardIn(col,c));
-  if(!cards.length){ grid.innerHTML='<div id="empty">Aucune carte.</div>'; return; }
-  cards.forEach(c=>{
-    const info=cache[c.card_id]||{};
-    const el=document.createElement('div'); el.className='card';
-    el.innerHTML=`
-      <a class="imgbox" target="_blank" href="https://fr.wikipedia.org/wiki/${encodeURIComponent(info.t||'')}">
-        ${info.i?`<img src="${info.i}" loading="lazy" onerror="this.remove()">`:(info.t||'?')[0].toUpperCase()}
-      </a>
-      <div class="body">
-        <div class="title">${(c.shiny?'✨':'')+(c.starred?'⭐':'')+esc(info.t||'Chargement…')}</div>
-        <div class="desc">${esc(info.d||'')}</div>
-        <div class="tags">${(c.tags||[]).map(t=>`<span class="tg">${esc(t)}</span>`).join('')}</div>
-        <div class="foot">
-          <span class="rar r-${c.rarity}">${c.rarity}</span>
-          <span class="stats">⚔️<b class="atk">${c.atk}</b> · 🛡️<b class="def">${c.def}</b></span>
+    <div class="content-section" id="contentSection" style="display: none;">
+        <div class="section-header">
+            <h2 class="section-title" id="sectionTitle"></h2>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">Toutes</button>
+                <button class="filter-btn" data-filter="owned">Possédées</button>
+                <button class="filter-btn" data-filter="missing">Manquantes</button>
+            </div>
         </div>
-      </div>`;
-    grid.appendChild(el);
-  });
-}
-const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-init();
-</script>
+
+        <div class="subcollections" id="subcollections"></div>
+
+        <div class="cards-grid" id="cardsGrid"></div>
+    </div>
+
+    <script>
+        let collections = [];
+        let cardsByTitle = {};
+        let currentCollection = null;
+        let currentFilter = 'all';
+
+        async function loadData() {
+            try {
+                const [listesRes, dataRes] = await Promise.all([
+                    fetch('listes.json'),
+                    fetch('data.json')
+                ]);
+
+                const listes = await listesRes.json();
+                const data = await dataRes.json();
+
+                collections = listes.lists || listes;
+                
+                const cardsArray = data.cards || data;
+                cardsArray.forEach(card => {
+                    cardsByTitle[card.t] = card;
+                });
+
+                renderCollections();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        function renderCollections() {
+            const grid = document.getElementById('collectionsGrid');
+            grid.innerHTML = '';
+
+            collections.forEach((col, index) => {
+                const total = col.items.length;
+                const owned = col.have.length;
+                const percent = total > 0 ? Math.round((owned / total) * 100) : 0;
+                const missing = total - owned;
+
+                const card = document.createElement('div');
+                card.className = `collection-card ${percent === 100 ? 'complete' : ''} ${currentCollection === index ? 'active' : ''}`;
+                card.onclick = () => selectCollection(index);
+
+                const circumference = 2 * Math.PI * 27;
+                const offset = circumference - (percent / 100) * circumference;
+                const color = percent === 100 ? '#10b981' : percent > 50 ? '#3b82f6' : percent > 25 ? '#f59e0b' : '#6b7280';
+
+                card.innerHTML = `
+                    <div class="progress-ring">
+                        <svg width="60" height="60">
+                            <circle class="bg" cx="30" cy="30" r="27"></circle>
+                            <circle class="progress" cx="30" cy="30" r="27" 
+                                stroke="${color}" 
+                                stroke-dasharray="${circumference}" 
+                                stroke-dashoffset="${offset}"></circle>
+                        </svg>
+                        ${percent === 100 ? '<div class="check">✓</div>' : `<div class="percentage">${percent}%</div>`}
+                    </div>
+                    <div class="collection-info">
+                        <div class="collection-name">${col.name}</div>
+                        <div class="collection-stats"><strong>${owned}</strong> / ${total} cartes</div>
+                        <div class="collection-meta">
+                            <span>${missing} manquantes</span>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function selectCollection(index) {
+            currentCollection = index;
+            currentFilter = 'all';
+            renderCollections();
+            renderContent();
+        }
+
+        function renderContent() {
+            if (currentCollection === null) {
+                document.getElementById('contentSection').style.display = 'none';
+                return;
+            }
+
+            const col = collections[currentCollection];
+            document.getElementById('contentSection').style.display = 'block';
+            document.getElementById('sectionTitle').innerHTML = `${col.name} <span>${col.have.length} / ${col.items.length} cartes</span>`;
+
+            renderCards();
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
+
+            const col = collections[currentCollection];
+            let titles = [];
+
+            if (currentFilter === 'all') {
+                titles = col.items;
+            } else if (currentFilter === 'owned') {
+                titles = col.have;
+            } else if (currentFilter === 'missing') {
+                titles = col.items.filter(t => !col.have.includes(t));
+            }
+
+            if (titles.length === 0) {
+                grid.innerHTML = '<div class="empty-state">Aucune carte</div>';
+                return;
+            }
+
+            titles.forEach(title => {
+                const card = cardsByTitle[title];
+                if (!card) return;
+
+                const isOwned = col.have.includes(title);
+                const rarity = card.r || 'C';
+                const rarityClass = rarity === 'L' ? 'legendary' : rarity === 'UR' || rarity === 'SR' ? 'rare' : '';
+
+                const item = document.createElement('div');
+                item.className = `card-item ${isOwned ? 'owned ' + rarityClass : ''}`;
+
+                const imageUrl = card.i || '';
+                const year = ''; // Pas d'année dans les données
+
+                item.innerHTML = `
+                    ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="card-image" loading="lazy">` : '<div class="card-image"></div>'}
+                    <div class="card-info">
+                        ${year ? `<div class="card-year">${year}</div>` : ''}
+                        <div class="card-title" title="${title}">${title}</div>
+                    </div>
+                `;
+
+                grid.appendChild(item);
+            });
+        }
+
+        // Filtres
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderCards();
+            };
+        });
+
+        loadData();
+    </script>
 </body>
 </html>
