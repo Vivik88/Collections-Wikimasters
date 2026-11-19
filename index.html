@@ -1,497 +1,1139 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes Collections WikiMasters</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f7;
-            color: #1a1a1a;
-            padding: 2rem;
-            line-height: 1.5;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            color: #1a1a1a;
-        }
-
-        /* Grille des collections */
-        .collections-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .collection-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
-        .collection-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-            transform: translateY(-2px);
-        }
-
-        .collection-card.active {
-            border-color: #3b82f6;
-        }
-
-        .collection-card.complete {
-            border-color: #10b981;
-        }
-
-        /* Anneau de progression */
-        .progress-ring {
-            position: relative;
-            width: 60px;
-            height: 60px;
-            flex-shrink: 0;
-        }
-
-        .progress-ring svg {
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring circle {
-            fill: none;
-            stroke-width: 6;
-        }
-
-        .progress-ring .bg {
-            stroke: #e5e7eb;
-        }
-
-        .progress-ring .progress {
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.5s ease;
-        }
-
-        .progress-ring .percentage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #1a1a1a;
-        }
-
-        .progress-ring .check {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.5rem;
-            color: #10b981;
-        }
-
-        /* Infos de la collection */
-        .collection-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .collection-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-            color: #1a1a1a;
-        }
-
-        .collection-stats {
-            font-size: 0.85rem;
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-        }
-
-        .collection-stats strong {
-            color: #1a1a1a;
-        }
-
-        .collection-meta {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            display: flex;
-            gap: 1rem;
-        }
-
-        .collection-meta span {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        /* Section contenu */
-        .content-section {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        .section-title span {
-            color: #6b7280;
-            font-weight: 400;
-            font-size: 1rem;
-        }
-
-        /* Filtres */
-        .filters {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 0.5rem 1rem;
-            border: 1px solid #e5e7eb;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-
-        .filter-btn:hover {
-            background: #f3f4f6;
-        }
-
-        .filter-btn.active {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
-
-        /* Sous-collections */
-        .subcollections {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .subcollection-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 1rem;
-        }
-
-        .subcollection-name {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .subcollection-bar {
-            height: 4px;
-            background: #e5e7eb;
-            border-radius: 2px;
-            margin-bottom: 0.5rem;
-            overflow: hidden;
-        }
-
-        .subcollection-bar-fill {
-            height: 100%;
-            background: #3b82f6;
-            border-radius: 2px;
-            transition: width 0.5s ease;
-        }
-
-        .subcollection-stats {
-            font-size: 0.75rem;
-            color: #6b7280;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* Grille de cartes */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 1rem;
-        }
-
-        .card-item {
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .card-item:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .card-item.owned {
-            border-color: #8b5cf6;
-        }
-
-        .card-item.owned.rare {
-            border-color: #f59e0b;
-        }
-
-        .card-item.owned.legendary {
-            border-color: #10b981;
-        }
-
-        .card-image {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            background: #f3f4f6;
-        }
-
-        .card-info {
-            padding: 0.5rem;
-        }
-
-        .card-year {
-            font-size: 0.7rem;
-            color: #6b7280;
-            margin-bottom: 0.25rem;
-        }
-
-        .card-title {
-            font-size: 0.8rem;
-            font-weight: 600;
-            line-height: 1.3;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #6b7280;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            .collections-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .cards-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            }
-        }
-    </style>
-</head>
-<body>
-    <h1>Collections</h1>
-
-    <div class="collections-grid" id="collectionsGrid"></div>
-
-    <div class="content-section" id="contentSection" style="display: none;">
-        <div class="section-header">
-            <h2 class="section-title" id="sectionTitle"></h2>
-            <div class="filters">
-                <button class="filter-btn active" data-filter="all">Toutes</button>
-                <button class="filter-btn" data-filter="owned">Possédées</button>
-                <button class="filter-btn" data-filter="missing">Manquantes</button>
-            </div>
-        </div>
-
-        <div class="subcollections" id="subcollections"></div>
-
-        <div class="cards-grid" id="cardsGrid"></div>
-    </div>
+    <title>Wikimasters • Collections</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <script>
-        let collections = [];
-        let cardsByTitle = {};
-        let currentCollection = null;
-        let currentFilter = 'all';
-
-        async function loadData() {
-            try {
-                const [listesRes, dataRes] = await Promise.all([
-                    fetch('listes.json'),
-                    fetch('data.json')
-                ]);
-
-                const listes = await listesRes.json();
-                const data = await dataRes.json();
-
-                collections = listes.lists || listes;
-                
-                const cardsArray = data.cards || data;
-                cardsArray.forEach(card => {
-                    cardsByTitle[card.t] = card;
-                });
-
-                renderCollections();
-            } catch (error) {
-                console.error('Erreur:', error);
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        darkbg: '#0b0e14',
+                        darkcard: '#131822',
+                        darkborder: '#1f2736',
+                        darkhover: '#1a2130',
+                    }
+                }
             }
         }
+    </script>
 
-        function renderCollections() {
-            const grid = document.getElementById('collectionsGrid');
-            grid.innerHTML = '';
+    <style>
+        body {
+            background-color: #0b0e14;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
 
-            collections.forEach((col, index) => {
-                const total = col.items.length;
-                const owned = col.have.length;
-                const percent = total > 0 ? Math.round((owned / total) * 100) : 0;
-                const missing = total - owned;
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0e14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2736;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
 
-                const card = document.createElement('div');
-                card.className = `collection-card ${percent === 100 ? 'complete' : ''} ${currentCollection === index ? 'active' : ''}`;
-                card.onclick = () => selectCollection(index);
+        /* Effet holographique / Shiny pour les cartes brillantes */
+        .shiny-card {
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.25);
+            border-color: rgba(250, 204, 21, 0.6) !important;
+        }
+        .shiny-card::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                115deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.18) 45%,
+                rgba(253, 224, 71, 0.25) 50%,
+                transparent 65%
+            );
+            transform: rotate(25deg);
+            animation: shineSweep 4s infinite linear;
+            pointer-events: none;
+        }
+        @keyframes shineSweep {
+            0% { transform: translateX(-100%) rotate(25deg); }
+            100% { transform: translateX(100%) rotate(25deg); }
+        }
 
-                const circumference = 2 * Math.PI * 27;
-                const offset = circumference - (percent / 100) * circumference;
-                const color = percent === 100 ? '#10b981' : percent > 50 ? '#3b82f6' : percent > 25 ? '#f59e0b' : '#6b7280';
+        /* Badges de rareté Wikimasters */
+        .rarity-C  { background: #334155; color: #f8fafc; border: 1px solid #475569; }
+        .rarity-PC { background: #065f46; color: #a7f3d0; border: 1px solid #10b981; }
+        .rarity-R  { background: #1e40af; color: #bfdbfe; border: 1px solid #3b82f6; }
+        .rarity-SR { background: #6b21a8; color: #e9d5ff; border: 1px solid #a855f7; }
+        .rarity-UR { background: #9a3412; color: #fed7aa; border: 1px solid #f97316; }
+        .rarity-L  { background: linear-gradient(135deg, #b45309, #eab308); color: #fff; border: 1px solid #fef08a; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
 
-                card.innerHTML = `
-                    <div class="progress-ring">
-                        <svg width="60" height="60">
-                            <circle class="bg" cx="30" cy="30" r="27"></circle>
-                            <circle class="progress" cx="30" cy="30" r="27" 
-                                stroke="${color}" 
-                                stroke-dasharray="${circumference}" 
-                                stroke-dashoffset="${offset}"></circle>
-                        </svg>
-                        ${percent === 100 ? '<div class="check">✓</div>' : `<div class="percentage">${percent}%</div>`}
+    <!-- =========================================================================
+         CONFIGURATION SUPABASE (À REMPLIR UNE FOIS POUR DÉPLOIEMENT GITHUB PAGES)
+         ========================================================================= -->
+    <script>
+        // Clés configurées pour ton projet Supabase
+        const DEFAULT_SUPABASE_URL = "https://qnwmyisjkyofnowcmpkw.supabase.co"; 
+        const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_1tkQAqQhrtCFOrjetEiJrA_Myyf-K3d";
+    </script>
+
+    <!-- BARRE DE NAVIGATION SUPÉRIEURE -->
+    <header class="sticky top-0 z-30 bg-darkbg/90 backdrop-blur-md border-b border-darkborder">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <!-- Logo / Titre -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="resetNavigation()">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg tracking-tight text-white leading-none">Wikimasters</h1>
+                    <span class="text-xs text-slate-400 font-medium">Mes Collections</span>
+                </div>
+            </div>
+
+            <!-- Compteur global rapide (Desktop) -->
+            <div id="global-stats-badge" class="hidden md:flex items-center gap-4 bg-darkcard border border-darkborder px-4 py-1.5 rounded-full text-xs">
+                <span class="text-slate-400">Progression totale :</span>
+                <span id="global-progress-text" class="font-bold text-indigo-400">0 / 0 (0%)</span>
+                <div class="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="global-progress-bar" class="h-full bg-indigo-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Actions Droite (Admin / Synchro / Config) -->
+            <div class="flex items-center gap-2">
+                <!-- Bouton Synchro JSON (Visible uniquement si Admin connecté) -->
+                <button id="btn-sync-json" onclick="openModal('modal-sync')" class="hidden items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-medium px-3 py-2 rounded-xl transition shadow-lg shadow-emerald-600/20">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="hidden sm:inline">Synchro Vitrine</span>
+                </button>
+
+                <!-- Bouton Gestion Catégories/Collections (Visible uniquement si Admin connecté) -->
+                <button id="btn-manage-structure" onclick="openModal('modal-structure')" class="hidden items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium px-3 py-2 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                    <i class="fa-solid fa-folder-plus"></i>
+                    <span class="hidden sm:inline">Catégories</span>
+                </button>
+
+                <!-- Bouton Connexion / Déconnexion Admin -->
+                <button id="btn-auth" onclick="handleAuthClick()" class="flex items-center gap-2 bg-darkcard hover:bg-darkhover border border-darkborder text-slate-300 text-xs sm:text-sm font-medium px-3 py-2 rounded-xl transition">
+                    <i id="auth-icon" class="fa-solid fa-lock text-slate-400"></i>
+                    <span id="auth-label">Admin</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
+
+        <!-- SIDEBAR GAUCHE : CATÉGORIES & SOUS-CATÉGORIES -->
+        <aside class="w-full lg:w-72 shrink-0 flex flex-col gap-4">
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Catégories</h2>
+                    <button onclick="selectAllCollections()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+                        Tout voir
+                    </button>
+                </div>
+
+                <!-- Liste dynamique des catégories et sous-catégories -->
+                <div id="sidebar-tree" class="space-y-2">
+                    <div class="text-center py-6 text-slate-500 text-sm">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement...
                     </div>
-                    <div class="collection-info">
-                        <div class="collection-name">${col.name}</div>
-                        <div class="collection-stats"><strong>${owned}</strong> / ${total} cartes</div>
-                        <div class="collection-meta">
-                            <span>${missing} manquantes</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ZONE DE DROITE : EN-TÊTE COLLECTION + FILTRES + GRILLE DE CARTES -->
+        <section class="flex-1 flex flex-col gap-5 min-w-0">
+
+            <!-- En-tête de la vue active -->
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div id="breadcrumb" class="text-xs font-medium text-indigo-400 mb-1">Vue d'ensemble</div>
+                    <h2 id="view-title" class="text-xl sm:text-2xl font-bold text-white">Toutes les collections</h2>
+                    <p id="view-subtitle" class="text-sm text-slate-400 mt-0.5">Sélectionne une sous-catégorie à gauche pour explorer tes cartes.</p>
+                </div>
+
+                <div class="flex flex-col sm:items-end gap-2">
+                    <!-- Bouton Ajouter une carte (Admin uniquement + sous-catégorie sélectionnée) -->
+                    <button id="btn-add-card" onclick="openAddCardModal()" class="hidden items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                        <i class="fa-solid fa-plus"></i> Ajouter une carte
+                    </button>
+
+                    <!-- Barre de progression de la vue active -->
+                    <div class="flex items-center gap-3">
+                        <span id="view-progress-text" class="text-xs font-bold text-slate-300">0 / 0 cartes (0%)</span>
+                        <div class="w-32 h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div id="view-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
-                `;
+                </div>
+            </div>
 
-                grid.appendChild(card);
-            });
-        }
+            <!-- Barre de filtres et recherche -->
+            <div class="bg-darkcard border border-darkborder rounded-2xl p-3 flex flex-wrap items-center gap-3">
+                <!-- Recherche par titre -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input type="text" id="filter-search" oninput="renderCards()" placeholder="Rechercher une carte..." class="w-full bg-darkbg border border-darkborder focus:border-indigo-500 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 outline-none transition">
+                </div>
 
-        function selectCollection(index) {
-            currentCollection = index;
-            currentFilter = 'all';
-            renderCollections();
-            renderContent();
-        }
+                <!-- Filtre Statut (Toutes / Possédées / Manquantes) -->
+                <div class="flex bg-darkbg p-1 rounded-xl border border-darkborder">
+                    <button onclick="setStatusFilter('all')" id="tab-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">Toutes</button>
+                    <button onclick="setStatusFilter('owned')" id="tab-owned" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">Possédées</button>
+                    <button onclick="setStatusFilter('missing')" id="tab-missing" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">Manquantes</button>
+                </div>
 
-        function renderContent() {
-            if (currentCollection === null) {
-                document.getElementById('contentSection').style.display = 'none';
+                <!-- Filtre Rareté -->
+                <select id="filter-rarity" onchange="renderCards()" class="bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs font-medium text-slate-300 outline-none focus:border-indigo-500">
+                    <option value="ALL">Toutes raretés</option>
+                    <option value="C">Commune (C)</option>
+                    <option value="PC">Peu Commune (PC)</option>
+                    <option value="R">Rare (R)</option>
+                    <option value="SR">Super Rare (SR)</option>
+                    <option value="UR">Ultra Rare (UR)</option>
+                    <option value="L">Légendaire (L)</option>
+                </select>
+
+                <!-- Tri -->
+                <select id="filter-sort" onchange="renderCards()" class="bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs font-medium text-slate-300 outline-none focus:border-indigo-500">
+                    <option value="title_asc">Nom (A → Z)</option>
+                    <option value="rarity_desc">Rareté (L → C)</option>
+                    <option value="atk_desc">ATK (Haut → Bas)</option>
+                    <option value="def_desc">DEF (Haut → Bas)</option>
+                    <option value="owned_first">Possédées d'abord</option>
+                </select>
+            </div>
+
+            <!-- Grille de cartes -->
+            <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                <!-- Les cartes seront injectées ici -->
+            </div>
+
+        </section>
+    </main>
+
+    <!-- =========================================================================
+         MODALE 1 : CONFIGURATION SUPABASE (SI CLÉS MANQUANTES)
+         ========================================================================= -->
+    <div id="modal-config" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white">Connexion Supabase</h3>
+                    <p class="text-xs text-slate-400">Configure ton projet gratuit pour démarrer</p>
+                </div>
+            </div>
+            <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                Renseigne l'URL et la clé publique (<code>anon key</code>) de ton projet Supabase. Pour tes visiteurs GitHub Pages, pense à les coller directement en haut du fichier <code>index.html</code>.
+            </p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Supabase Project URL</label>
+                    <input type="text" id="cfg-url" placeholder="https://xyzcompany.supabase.co" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Supabase Anon Public Key</label>
+                    <input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <button onclick="saveConfigFromModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition mt-2">
+                    Se connecter à la base
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODALE 2 : CONNEXION ADMIN
+         ========================================================================= -->
+    <div id="modal-login" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-white">Espace Administrateur</h3>
+                <button onclick="closeModal('modal-login')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="submitLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Email Admin</label>
+                    <input type="email" id="login-email" required class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Mot de passe</label>
+                    <input type="password" id="login-password" required class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
+                    Déverrouiller l'édition
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODALE 3 : GESTION DES CATÉGORIES & SOUS-CATÉGORIES
+         ========================================================================= -->
+    <div id="modal-structure" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-5 pb-3 border-b border-darkborder">
+                <h3 class="font-bold text-lg text-white">Gérer les Catégories & Sous-catégories</h3>
+                <button onclick="closeModal('modal-structure')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Créer une Catégorie -->
+                <div class="bg-darkbg border border-darkborder rounded-xl p-4">
+                    <h4 class="font-semibold text-sm text-indigo-400 mb-3"><i class="fa-solid fa-folder mr-1.5"></i>Nouvelle Catégorie</h4>
+                    <form onsubmit="createCategory(event)" class="space-y-3">
+                        <div class="flex gap-2">
+                            <input type="text" id="new-cat-icon" value="📁" maxlength="4" class="w-14 text-center bg-darkcard border border-darkborder rounded-xl px-2 py-2 text-sm text-white outline-none">
+                            <input type="text" id="new-cat-name" required placeholder="Ex: Géographie, Sport..." class="flex-1 bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition">
+                            Créer la catégorie
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Créer une Sous-catégorie (Collection) -->
+                <div class="bg-darkbg border border-darkborder rounded-xl p-4">
+                    <h4 class="font-semibold text-sm text-emerald-400 mb-3"><i class="fa-solid fa-layer-group mr-1.5"></i>Nouvelle Sous-catégorie</h4>
+                    <form onsubmit="createCollection(event)" class="space-y-3">
+                        <select id="new-col-cat" required class="w-full bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-emerald-500">
+                            <option value="">-- Choisir la catégorie --</option>
+                        </select>
+                        <input type="text" id="new-col-name" required placeholder="Ex: Communes des Vosges" class="w-full bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-emerald-500">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 rounded-xl transition">
+                            Créer la sous-catégorie
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste existante pour suppression -->
+            <div class="mt-6">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Structure actuelle</h4>
+                <div id="structure-admin-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODALE 4 : AJOUTER / ÉDITER UNE CARTE MANUELLEMENT
+         ========================================================================= -->
+    <div id="modal-card" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-darkborder">
+                <h3 id="modal-card-title" class="font-bold text-lg text-white">Ajouter une carte</h3>
+                <button onclick="closeModal('modal-card')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="saveCard(event)" class="space-y-4">
+                <input type="hidden" id="edit-card-db-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">ID Wikimasters de la carte (UUID) *</label>
+                    <input type="text" id="card-uuid" required placeholder="Ex: 550e8400-e29b-41d4-a716-446655440000" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-indigo-500">
+                    <p class="text-[11px] text-slate-500 mt-1">Indispensable pour que l'import JSON reconnaisse automatiquement cette carte.</p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Titre de la carte *</label>
+                        <input type="text" id="card-title" required placeholder="Ex: Épinal" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Rareté *</label>
+                        <select id="card-rarity" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                            <option value="C">C (Commune)</option>
+                            <option value="PC">PC (Peu Commune)</option>
+                            <option value="R">R (Rare)</option>
+                            <option value="SR">SR (Super Rare)</option>
+                            <option value="UR">UR (Ultra Rare)</option>
+                            <option value="L">L (Légendaire)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">URL de l'image (Wikimedia / Wikipedia)</label>
+                    <input type="url" id="card-image" placeholder="https://upload.wikimedia.org/..." class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">ATK</label>
+                        <input type="number" id="card-atk" value="0" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">DEF</label>
+                        <input type="number" id="card-def" value="0" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6 pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="card-owned" class="w-4 h-4 rounded accent-emerald-500">
+                        <span class="text-sm text-slate-200 font-medium">Carte possédée</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="card-shiny" class="w-4 h-4 rounded accent-amber-400">
+                        <span class="text-sm text-amber-300 font-medium">✨ Brillante (Shiny)</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-3 pt-3">
+                    <button type="button" onclick="closeModal('modal-card')" class="flex-1 bg-darkbg hover:bg-darkhover border border-darkborder text-slate-300 font-medium py-2.5 rounded-xl transition">
+                        Annuler
+                    </button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODALE 5 : SYNCHRONISATION AVEC MA-VITRINE-WIKIMASTERS.JSON
+         ========================================================================= -->
+    <div id="modal-sync" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-darkborder">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-rotate text-emerald-400 text-lg"></i>
+                    <h3 class="font-bold text-lg text-white">Synchroniser ma Vitrine JSON</h3>
+                </div>
+                <button onclick="closeModal('modal-sync')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                Sélectionne ton fichier <code>ma-vitrine-wikimasters.json</code>. L'application va comparer les <code>card_id</code> présents dans ton inventaire avec toutes les cartes enregistrées dans tes collections :
+            </p>
+            <ul class="text-xs text-slate-400 space-y-1.5 mb-5 list-disc pl-5">
+                <li>Toutes les cartes manquantes que tu as obtenues passeront automatiquement en <strong class="text-emerald-400">Possédée</strong>.</li>
+                <li>Les statistiques réelles (<code>ATK</code>, <code>DEF</code>, statut <code>Shiny ✨</code>, date d'obtention) seront mises à jour.</li>
+                <li>Aucune nouvelle collection ni tag ne sera importé : ta structure reste propre.</li>
+            </ul>
+
+            <div class="border-2 border-dashed border-darkborder hover:border-emerald-500/60 rounded-2xl p-6 text-center transition bg-darkbg/50">
+                <input type="file" id="json-file-input" accept=".json" onchange="handleJsonSync(event)" class="hidden">
+                <label for="json-file-input" class="cursor-pointer flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-white">Clique pour choisir ma-vitrine-wikimasters.json</span>
+                    <span class="text-xs text-slate-500">Traitement instantané dans ton navigateur</span>
+                </label>
+            </div>
+
+            <!-- Zone de résultat de synchro -->
+            <div id="sync-result-box" class="hidden mt-4 p-4 rounded-xl bg-darkbg border border-darkborder text-xs space-y-1"></div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION (Remplace alert()) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- =========================================================================
+         LOGIQUE JAVASCRIPT DE L'APPLICATION
+         ========================================================================= -->
+    <script>
+        // --- ÉTAT GLOBAL ---
+        let supabaseClient = null;
+        let isAdmin = false;
+        let categories = [];
+        let collections = [];
+        let cards = [];
+
+        // Filtres et navigation
+        let selectedCategoryId = null;
+        let selectedCollectionId = null;
+        let statusFilter = 'all'; // 'all', 'owned', 'missing'
+
+        const RARITY_ORDER = { 'L': 6, 'UR': 5, 'SR': 4, 'R': 3, 'PC': 2, 'C': 1 };
+
+        // --- INITIALISATION AU CHARGEMENT ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            const url = DEFAULT_SUPABASE_URL || sessionStorage.getItem('wm_sb_url');
+            const key = DEFAULT_SUPABASE_ANON_KEY || sessionStorage.getItem('wm_sb_key');
+
+            if (!url || !key) {
+                openModal('modal-config');
                 return;
             }
 
-            const col = collections[currentCollection];
-            document.getElementById('contentSection').style.display = 'block';
-            document.getElementById('sectionTitle').innerHTML = `${col.name} <span>${col.have.length} / ${col.items.length} cartes</span>`;
+            initSupabase(url, key);
+        });
 
+        function saveConfigFromModal() {
+            const url = document.getElementById('cfg-url').value.trim();
+            const key = document.getElementById('cfg-key').value.trim();
+            if (!url || !key) {
+                showToast("Merci de remplir les deux champs.", "error");
+                return;
+            }
+            sessionStorage.setItem('wm_sb_url', url);
+            sessionStorage.setItem('wm_sb_key', key);
+            closeModal('modal-config');
+            initSupabase(url, key);
+        }
+
+        async function initSupabase(url, key) {
+            try {
+                supabaseClient = window.supabase.createClient(url, key);
+
+                // Vérifier si une session admin est déjà active
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                updateAuthState(!!session);
+
+                // Écouter les changements d'authentification
+                supabaseClient.auth.onAuthStateChange((_event, session) => {
+                    updateAuthState(!!session);
+                    renderSidebar();
+                    renderCards();
+                });
+
+                await loadAllData();
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur de connexion à Supabase.", "error");
+            }
+        }
+
+        // --- CHARGEMENT DES DONNÉES ---
+        async function loadAllData() {
+            try {
+                const [catRes, colRes, cardRes] = await Promise.all([
+                    supabaseClient.from('categories').select('*').order('sort_order', { ascending: true }).order('name', { ascending: true }),
+                    supabaseClient.from('collections').select('*').order('sort_order', { ascending: true }).order('name', { ascending: true }),
+                    supabaseClient.from('collection_cards').select('*')
+                ]);
+
+                if (catRes.error) throw catRes.error;
+                if (colRes.error) throw colRes.error;
+                if (cardRes.error) throw cardRes.error;
+
+                categories = catRes.data || [];
+                collections = colRes.data || [];
+                cards = cardRes.data || [];
+
+                updateGlobalProgress();
+                renderSidebar();
+                updateViewHeader();
+                renderCards();
+                populateAdminStructureModal();
+            } catch (err) {
+                console.error(err);
+                showToast("Impossible de charger les données. Vérifie que le script SQL a bien été exécuté.", "error");
+            }
+        }
+
+        // --- AUTHENTIFICATION ADMIN ---
+        function updateAuthState(loggedIn) {
+            isAdmin = loggedIn;
+            const btnAuth = document.getElementById('btn-auth');
+            const authIcon = document.getElementById('auth-icon');
+            const authLabel = document.getElementById('auth-label');
+            const btnSync = document.getElementById('btn-sync-json');
+            const btnStruct = document.getElementById('btn-manage-structure');
+
+            if (isAdmin) {
+                authIcon.className = "fa-solid fa-unlock text-emerald-400";
+                authLabel.textContent = "Déconnexion";
+                btnAuth.classList.add('border-emerald-500/40');
+                btnSync.classList.remove('hidden');
+                btnSync.classList.add('flex');
+                btnStruct.classList.remove('hidden');
+                btnStruct.classList.add('flex');
+            } else {
+                authIcon.className = "fa-solid fa-lock text-slate-400";
+                authLabel.textContent = "Admin";
+                btnAuth.classList.remove('border-emerald-500/40');
+                btnSync.classList.add('hidden');
+                btnSync.classList.remove('flex');
+                btnStruct.classList.add('hidden');
+                btnStruct.classList.remove('flex');
+            }
+            updateViewHeader();
+        }
+
+        async function handleAuthClick() {
+            if (isAdmin) {
+                await supabaseClient.auth.signOut();
+                showToast("Déconnecté du mode Admin.", "info");
+            } else {
+                openModal('modal-login');
+            }
+        }
+
+        async function submitLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                showToast("Identifiants incorrects : " + error.message, "error");
+            } else {
+                closeModal('modal-login');
+                showToast("Mode Admin activé !", "success");
+            }
+        }
+
+        // --- NAVIGATION SIDEBAR ---
+        function renderSidebar() {
+            const container = document.getElementById('sidebar-tree');
+            if (categories.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 px-2 text-slate-500 text-xs">
+                        Aucune catégorie créée.<br>
+                        ${isAdmin ? '<span class="text-indigo-400">Clique sur "Catégories" en haut pour démarrer !</span>' : 'Connecte-toi en Admin pour créer tes collections.'}
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = categories.map(cat => {
+                const catCols = collections.filter(c => c.category_id === cat.id);
+                const isCatActive = selectedCategoryId === cat.id && !selectedCollectionId;
+
+                const subHtml = catCols.map(col => {
+                    const colCards = cards.filter(c => c.collection_id === col.id);
+                    const ownedCount = colCards.filter(c => c.is_owned).length;
+                    const totalCount = colCards.length;
+                    const pct = totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
+                    const isColActive = selectedCollectionId === col.id;
+
+                    return `
+                        <button onclick="selectCollection('${col.id}')" class="w-full text-left pl-7 pr-3 py-2 rounded-xl text-xs flex items-center justify-between gap-2 transition ${isColActive ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20' : 'text-slate-400 hover:bg-darkhover hover:text-slate-200'}">
+                            <span class="truncate">${escapeHtml(col.name)}</span>
+                            <span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${isColActive ? 'bg-indigo-500 text-white' : (pct === 100 && totalCount > 0 ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'bg-darkbg text-slate-400')}">
+                                ${ownedCount}/${totalCount}
+                            </span>
+                        </button>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="space-y-1">
+                        <button onclick="selectCategory('${cat.id}')" class="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold flex items-center justify-between transition ${isCatActive ? 'bg-darkhover text-indigo-400 border border-indigo-500/30' : 'text-slate-200 hover:bg-darkhover'}">
+                            <span class="flex items-center gap-2 truncate">
+                                <span>${escapeHtml(cat.icon || '📁')}</span>
+                                <span class="truncate">${escapeHtml(cat.name)}</span>
+                            </span>
+                            <span class="text-xs text-slate-500">${catCols.length}</span>
+                        </button>
+                        <div class="space-y-0.5">
+                            ${subHtml || '<div class="pl-8 py-1 text-[11px] text-slate-600 italic">Aucune sous-catégorie</div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function resetNavigation() {
+            selectAllCollections();
+        }
+
+        function selectAllCollections() {
+            selectedCategoryId = null;
+            selectedCollectionId = null;
+            renderSidebar();
+            updateViewHeader();
+            renderCards();
+        }
+
+        function selectCategory(catId) {
+            selectedCategoryId = catId;
+            selectedCollectionId = null;
+            renderSidebar();
+            updateViewHeader();
+            renderCards();
+        }
+
+        function selectCollection(colId) {
+            const col = collections.find(c => c.id === colId);
+            selectedCollectionId = colId;
+            selectedCategoryId = col ? col.category_id : null;
+            renderSidebar();
+            updateViewHeader();
+            renderCards();
+        }
+
+        function updateViewHeader() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            const title = document.getElementById('view-title');
+            const subtitle = document.getElementById('view-subtitle');
+            const btnAddCard = document.getElementById('btn-add-card');
+
+            // Afficher le bouton "Ajouter une carte" uniquement si Admin + une sous-catégorie est ouverte
+            if (isAdmin && selectedCollectionId) {
+                btnAddCard.classList.remove('hidden');
+                btnAddCard.classList.add('flex');
+            } else {
+                btnAddCard.classList.add('hidden');
+                btnAddCard.classList.remove('flex');
+            }
+
+            if (selectedCollectionId) {
+                const col = collections.find(c => c.id === selectedCollectionId);
+                const cat = categories.find(c => c.id === col?.category_id);
+                breadcrumb.textContent = `${cat ? cat.icon + ' ' + cat.name : 'Catégorie'} / Sous-catégorie`;
+                title.textContent = col ? col.name : 'Collection';
+                subtitle.textContent = col?.description || 'Liste complète des cartes de cette sous-catégorie.';
+            } else if (selectedCategoryId) {
+                const cat = categories.find(c => c.id === selectedCategoryId);
+                breadcrumb.textContent = 'Catégorie';
+                title.textContent = cat ? `${cat.icon} ${cat.name}` : 'Catégorie';
+                subtitle.textContent = 'Toutes les cartes regroupées dans cette catégorie.';
+            } else {
+                breadcrumb.textContent = 'Vue d\'ensemble';
+                title.textContent = 'Toutes les collections';
+                subtitle.textContent = 'Ensemble des cartes suivies toutes catégories confondues.';
+            }
+        }
+
+        function updateGlobalProgress() {
+            const total = cards.length;
+            const owned = cards.filter(c => c.is_owned).length;
+            const pct = total > 0 ? Math.round((owned / total) * 100) : 0;
+
+            document.getElementById('global-progress-text').textContent = `${owned} / ${total} (${pct}%)`;
+            document.getElementById('global-progress-bar').style.width = `${pct}%`;
+        }
+
+        // --- FILTRAGE & AFFICHAGE DES CARTES ---
+        function setStatusFilter(status) {
+            statusFilter = status;
+            ['all', 'owned', 'missing'].forEach(s => {
+                const btn = document.getElementById(`tab-${s}`);
+                if (s === status) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
+                }
+            });
             renderCards();
         }
 
         function renderCards() {
-            const grid = document.getElementById('cardsGrid');
-            grid.innerHTML = '';
+            const grid = document.getElementById('cards-grid');
+            const search = document.getElementById('filter-search').value.toLowerCase().trim();
+            const rarityFilter = document.getElementById('filter-rarity').value;
+            const sortBy = document.getElementById('filter-sort').value;
 
-            const col = collections[currentCollection];
-            let titles = [];
-
-            if (currentFilter === 'all') {
-                titles = col.items;
-            } else if (currentFilter === 'owned') {
-                titles = col.have;
-            } else if (currentFilter === 'missing') {
-                titles = col.items.filter(t => !col.have.includes(t));
+            // 1. Filtrer par périmètre (Collection, Catégorie, ou Tout)
+            let scopedCards = cards;
+            if (selectedCollectionId) {
+                scopedCards = cards.filter(c => c.collection_id === selectedCollectionId);
+            } else if (selectedCategoryId) {
+                const colIds = collections.filter(col => col.category_id === selectedCategoryId).map(col => col.id);
+                scopedCards = cards.filter(c => colIds.includes(c.collection_id));
             }
 
-            if (titles.length === 0) {
-                grid.innerHTML = '<div class="empty-state">Aucune carte</div>';
+            // Mise à jour de la barre de progression de la vue active
+            const viewTotal = scopedCards.length;
+            const viewOwned = scopedCards.filter(c => c.is_owned).length;
+            const viewPct = viewTotal > 0 ? Math.round((viewOwned / viewTotal) * 100) : 0;
+            document.getElementById('view-progress-text').textContent = `${viewOwned} / ${viewTotal} cartes (${viewPct}%)`;
+            document.getElementById('view-progress-bar').style.width = `${viewPct}%`;
+
+            // 2. Appliquer les filtres de recherche, statut, rareté
+            let filtered = scopedCards.filter(card => {
+                if (search && !card.title.toLowerCase().includes(search)) return false;
+                if (statusFilter === 'owned' && !card.is_owned) return false;
+                if (statusFilter === 'missing' && card.is_owned) return false;
+                if (rarityFilter !== 'ALL' && card.rarity !== rarityFilter) return false;
+                return true;
+            });
+
+            // 3. Trier
+            filtered.sort((a, b) => {
+                if (sortBy === 'title_asc') return a.title.localeCompare(b.title);
+                if (sortBy === 'rarity_desc') return (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
+                if (sortBy === 'atk_desc') return (b.atk || 0) - (a.atk || 0);
+                if (sortBy === 'def_desc') return (b.def || 0) - (a.def || 0);
+                if (sortBy === 'owned_first') return (b.is_owned === a.is_owned) ? a.title.localeCompare(b.title) : (b.is_owned ? 1 : -1);
+                return 0;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-darkcard border border-darkborder rounded-2xl p-12 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
+                            <i class="fa-regular fa-folder-open"></i>
+                        </div>
+                        <h3 class="text-white font-semibold mb-1">Aucune carte à afficher</h3>
+                        <p class="text-xs text-slate-400">
+                            ${selectedCollectionId && isAdmin ? 'Clique sur "+ Ajouter une carte" en haut à droite pour remplir cette collection.' : 'Modifie tes filtres ou sélectionne une autre sous-catégorie.'}
+                        </p>
+                    </div>
+                `;
                 return;
             }
 
-            titles.forEach(title => {
-                const card = cardsByTitle[title];
-                if (!card) return;
+            grid.innerHTML = filtered.map(card => {
+                const colObj = collections.find(c => c.id === card.collection_id);
+                const fallbackImg = `https://placehold.co/300x400/131822/64748b?text=${encodeURIComponent(card.title)}`;
+                const imgSrc = card.image_url || fallbackImg;
 
-                const isOwned = col.have.includes(title);
-                const rarity = card.r || 'C';
-                const rarityClass = rarity === 'L' ? 'legendary' : rarity === 'UR' || rarity === 'SR' ? 'rare' : '';
+                return `
+                    <div class="group relative bg-darkcard border border-darkborder rounded-2xl overflow-hidden flex flex-col transition duration-300 hover:-translate-y-1 hover:border-slate-600 ${card.is_owned ? (card.is_shiny ? 'shiny-card' : 'shadow-lg') : 'opacity-55 grayscale hover:opacity-80'}">
+                        
+                        <!-- Image de la carte -->
+                        <div class="relative aspect-[3/4] bg-slate-900 overflow-hidden">
+                            <img src="${escapeHtml(imgSrc)}" onerror="this.src='${fallbackImg}'" alt="${escapeHtml(card.title)}" loading="lazy" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                            
+                            <!-- Dégradé bas pour lisibilité -->
+                            <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-darkcard via-darkcard/60 to-transparent"></div>
 
-                const item = document.createElement('div');
-                item.className = `card-item ${isOwned ? 'owned ' + rarityClass : ''}`;
+                            <!-- Badge Rareté (Haut Gauche) -->
+                            <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[11px] font-extrabold tracking-wide shadow ${'rarity-' + card.rarity}">
+                                ${escapeHtml(card.rarity)}
+                            </span>
 
-                const imageUrl = card.i || '';
-                const year = ''; // Pas d'année dans les données
+                            <!-- Statut Possédée / Shiny (Haut Droite) -->
+                            <div class="absolute top-2.5 right-2.5 flex items-center gap-1">
+                                ${card.is_shiny ? '<span title="Brillante (Shiny)" class="w-6 h-6 rounded-full bg-amber-400/90 text-slate-950 flex items-center justify-center text-xs shadow">✨</span>' : ''}
+                                ${card.is_owned 
+                                    ? '<span title="Possédée" class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow"><i class="fa-solid fa-check"></i></span>'
+                                    : '<span title="Manquante" class="w-6 h-6 rounded-full bg-slate-900/80 border border-slate-700 text-slate-400 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></span>'
+                                }
+                            </div>
 
-                item.innerHTML = `
-                    ${imageUrl ? `<img src="${imageUrl}" alt="${title}" class="card-image" loading="lazy">` : '<div class="card-image"></div>'}
-                    <div class="card-info">
-                        ${year ? `<div class="card-year">${year}</div>` : ''}
-                        <div class="card-title" title="${title}">${title}</div>
+                            <!-- Boutons rapides Admin au survol -->
+                            ${isAdmin ? `
+                                <div class="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition z-10">
+                                    <button onclick="toggleCardOwned('${card.id}', ${!card.is_owned})" title="${card.is_owned ? 'Marquer manquante' : 'Marquer possédée'}" class="px-2.5 py-1.5 rounded-lg text-xs font-bold shadow ${card.is_owned ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-emerald-600 text-white hover:bg-emerald-500'}">
+                                        <i class="fa-solid ${card.is_owned ? 'fa-rotate-left' : 'fa-check'}"></i>
+                                    </button>
+                                    <button onclick="openEditCardModal('${card.id}')" title="Modifier" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button onclick="deleteCard('${card.id}')" title="Supprimer" class="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Infos bas de carte -->
+                        <div class="p-3 flex-1 flex flex-col justify-between">
+                            <div>
+                                ${!selectedCollectionId && colObj ? `<div class="text-[10px] font-semibold text-indigo-400 truncate mb-0.5">${escapeHtml(colObj.name)}</div>` : ''}
+                                <h3 class="font-bold text-sm text-white leading-snug line-clamp-2" title="${escapeHtml(card.title)}">${escapeHtml(card.title)}</h3>
+                            </div>
+
+                            <!-- Stats ATK / DEF -->
+                            <div class="mt-3 pt-2 border-t border-darkborder/80 flex items-center justify-between text-xs font-mono">
+                                <span class="text-rose-400 font-semibold"><i class="fa-solid fa-khanda mr-1 text-[10px]"></i>${card.atk || 0}</span>
+                                <span class="text-sky-400 font-semibold"><i class="fa-solid fa-shield-halved mr-1 text-[10px]"></i>${card.def || 0}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
-
-                grid.appendChild(item);
-            });
+            }).join('');
         }
 
-        // Filtres
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentFilter = btn.dataset.filter;
-                renderCards();
-            };
-        });
+        // --- ACTIONS ADMIN : CATÉGORIES & SOUS-CATÉGORIES ---
+        function populateAdminStructureModal() {
+            const select = document.getElementById('new-col-cat');
+            select.innerHTML = '<option value="">-- Choisir la catégorie --</option>' + 
+                categories.map(c => `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
 
-        loadData();
+            const list = document.getElementById('structure-admin-list');
+            if (categories.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-500 italic">Aucune catégorie pour le moment.</p>';
+                return;
+            }
+
+            list.innerHTML = categories.map(cat => {
+                const cols = collections.filter(c => c.category_id === cat.id);
+                return `
+                    <div class="bg-darkbg border border-darkborder rounded-xl p-3">
+                        <div class="flex items-center justify-between font-semibold text-sm text-white mb-2">
+                            <span>${escapeHtml(cat.icon)} ${escapeHtml(cat.name)}</span>
+                            <button onclick="deleteCategory('${cat.id}')" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded hover:bg-rose-500/10" title="Supprimer la catégorie">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-1 pl-4 border-l border-darkborder">
+                            ${cols.map(col => `
+                                <div class="flex items-center justify-between text-xs text-slate-300 py-1">
+                                    <span>${escapeHtml(col.name)}</span>
+                                    <button onclick="deleteCollection('${col.id}')" class="text-slate-500 hover:text-rose-400 px-1.5" title="Supprimer la sous-catégorie">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            `).join('') || '<span class="text-[11px] text-slate-600">Vide</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function createCategory(e) {
+            e.preventDefault();
+            const icon = document.getElementById('new-cat-icon').value.trim() || '📁';
+            const name = document.getElementById('new-cat-name').value.trim();
+
+            const { error } = await supabaseClient.from('categories').insert([{ name, icon }]);
+            if (error) return showToast("Erreur : " + error.message, "error");
+
+            document.getElementById('new-cat-name').value = '';
+            showToast("Catégorie créée !", "success");
+            await loadAllData();
+        }
+
+        async function deleteCategory(id) {
+            const { error } = await supabaseClient.from('categories').delete().eq('id', id);
+            if (error) return showToast("Erreur : " + error.message, "error");
+            if (selectedCategoryId === id) resetNavigation();
+            showToast("Catégorie supprimée.", "info");
+            await loadAllData();
+        }
+
+        async function createCollection(e) {
+            e.preventDefault();
+            const category_id = document.getElementById('new-col-cat').value;
+            const name = document.getElementById('new-col-name').value.trim();
+
+            const { error } = await supabaseClient.from('collections').insert([{ category_id, name }]);
+            if (error) return showToast("Erreur : " + error.message, "error");
+
+            document.getElementById('new-col-name').value = '';
+            showToast("Sous-catégorie créée !", "success");
+            await loadAllData();
+        }
+
+        async function deleteCollection(id) {
+            const { error } = await supabaseClient.from('collections').delete().eq('id', id);
+            if (error) return showToast("Erreur : " + error.message, "error");
+            if (selectedCollectionId === id) selectedCollectionId = null;
+            showToast("Sous-catégorie supprimée.", "info");
+            await loadAllData();
+        }
+
+        // --- ACTIONS ADMIN : CARTES ---
+        function openAddCardModal() {
+            document.getElementById('modal-card-title').textContent = "Ajouter une carte";
+            document.getElementById('edit-card-db-id').value = "";
+            document.getElementById('card-uuid').value = "";
+            document.getElementById('card-title').value = "";
+            document.getElementById('card-rarity').value = "C";
+            document.getElementById('card-image').value = "";
+            document.getElementById('card-atk').value = "0";
+            document.getElementById('card-def').value = "0";
+            document.getElementById('card-owned').checked = false;
+            document.getElementById('card-shiny').checked = false;
+            openModal('modal-card');
+        }
+
+        function openEditCardModal(dbId) {
+            const card = cards.find(c => c.id === dbId);
+            if (!card) return;
+
+            document.getElementById('modal-card-title').textContent = "Modifier la carte";
+            document.getElementById('edit-card-db-id').value = card.id;
+            document.getElementById('card-uuid').value = card.card_id;
+            document.getElementById('card-title').value = card.title;
+            document.getElementById('card-rarity').value = card.rarity;
+            document.getElementById('card-image').value = card.image_url || "";
+            document.getElementById('card-atk').value = card.atk || 0;
+            document.getElementById('card-def').value = card.def || 0;
+            document.getElementById('card-owned').checked = !!card.is_owned;
+            document.getElementById('card-shiny').checked = !!card.is_shiny;
+            openModal('modal-card');
+        }
+
+        async function saveCard(e) {
+            e.preventDefault();
+            const dbId = document.getElementById('edit-card-db-id').value;
+            const payload = {
+                card_id: document.getElementById('card-uuid').value.trim(),
+                title: document.getElementById('card-title').value.trim(),
+                rarity: document.getElementById('card-rarity').value,
+                image_url: document.getElementById('card-image').value.trim() || null,
+                atk: parseInt(document.getElementById('card-atk').value) || 0,
+                def: parseInt(document.getElementById('card-def').value) || 0,
+                is_owned: document.getElementById('card-owned').checked,
+                is_shiny: document.getElementById('card-shiny').checked,
+            };
+
+            let error;
+            if (dbId) {
+                ({ error } = await supabaseClient.from('collection_cards').update(payload).eq('id', dbId));
+            } else {
+                payload.collection_id = selectedCollectionId;
+                ({ error } = await supabaseClient.from('collection_cards').insert([payload]));
+            }
+
+            if (error) return showToast("Erreur : " + error.message, "error");
+
+            closeModal('modal-card');
+            showToast(dbId ? "Carte mise à jour !" : "Carte ajoutée à la collection !", "success");
+            await loadAllData();
+        }
+
+        async function toggleCardOwned(dbId, newState) {
+            const { error } = await supabaseClient
+                .from('collection_cards')
+                .update({ is_owned: newState })
+                .eq('id', dbId);
+
+            if (error) return showToast("Erreur : " + error.message, "error");
+            await loadAllData();
+        }
+
+        async function deleteCard(dbId) {
+            const { error } = await supabaseClient.from('collection_cards').delete().eq('id', dbId);
+            if (error) return showToast("Erreur : " + error.message, "error");
+            showToast("Carte supprimée.", "info");
+            await loadAllData();
+        }
+
+        // --- SYNCHRONISATION AVEC MA-VITRINE-WIKIMASTERS.JSON ---
+        async function handleJsonSync(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const resultBox = document.getElementById('sync-result-box');
+            resultBox.classList.remove('hidden');
+            resultBox.innerHTML = '<div class="text-indigo-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Analyse de ta vitrine en cours...</div>';
+
+            try {
+                const text = await file.text();
+                const json = JSON.parse(text);
+
+                if (!json.copies || !Array.isArray(json.copies)) {
+                    throw new Error("Format invalide : le tableau 'copies' est introuvable dans ce fichier JSON.");
+                }
+
+                // Indexer les copies possédées par card_id (en privilégiant la version shiny ou la plus haute ATK si doublons)
+                const ownedMap = new Map();
+                for (const copy of json.copies) {
+                    if (!copy.card_id) continue;
+                    const existing = ownedMap.get(copy.card_id);
+                    if (!existing || (!existing.shiny && copy.shiny) || (copy.atk > existing.atk)) {
+                        ownedMap.set(copy.card_id, copy);
+                    }
+                }
+
+                // Comparer avec les cartes enregistrées dans Supabase
+                let newlyUnlocked = 0;
+                let updatedStats = 0;
+                const updates = [];
+
+                for (const dbCard of cards) {
+                    const match = ownedMap.get(dbCard.card_id);
+                    if (match) {
+                        const wasMissing = !dbCard.is_owned;
+                        const needsStatUpdate = (match.shiny && !dbCard.is_shiny) || (match.atk && match.atk !== dbCard.atk) || (match.def && match.def !== dbCard.def);
+
+                        if (wasMissing || needsStatUpdate) {
+                            if (wasMissing) newlyUnlocked++;
+                            else updatedStats++;
+
+                            updates.push(
+                                supabaseClient.from('collection_cards').update({
+                                    is_owned: true,
+                                    is_shiny: dbCard.is_shiny || !!match.shiny,
+                                    atk: match.atk ?? dbCard.atk,
+                                    def: match.def ?? dbCard.def,
+                                    obtained_at: match.obtained_at || dbCard.obtained_at
+                                }).eq('id', dbCard.id)
+                            );
+                        }
+                    }
+                }
+
+                if (updates.length > 0) {
+                    await Promise.all(updates);
+                    await loadAllData();
+                }
+
+                resultBox.innerHTML = `
+                    <div class="font-bold text-emerald-400 text-sm mb-1"><i class="fa-solid fa-circle-check mr-1.5"></i>Synchronisation terminée !</div>
+                    <div class="text-slate-300">• Cartes analysées dans ton JSON : <strong>${json.copies.length}</strong></div>
+                    <div class="text-emerald-300">• Nouvelles cartes débloquées dans tes collections : <strong>+${newlyUnlocked}</strong></div>
+                    <div class="text-slate-400">• Cartes déjà possédées mises à jour (stats/shiny) : <strong>${updatedStats}</strong></div>
+                `;
+                showToast(`Synchro réussie : +${newlyUnlocked} nouvelles cartes !`, "success");
+            } catch (err) {
+                console.error(err);
+                resultBox.innerHTML = `<div class="text-rose-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Erreur : ${escapeHtml(err.message)}</div>`;
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        // --- UTILITAIRES UI ---
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-emerald-600 border-emerald-400 text-white',
+                error: 'bg-rose-600 border-rose-400 text-white',
+                info: 'bg-darkcard border-indigo-500 text-slate-100'
+            };
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto border px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2.5 transition-all duration-300 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
     </script>
 </body>
 </html>
