@@ -185,10 +185,15 @@
                 </div>
 
                 <div class="flex flex-col sm:items-end gap-2">
-                    <!-- Bouton Ajouter une carte (Admin uniquement + sous-catégorie sélectionnée) -->
-                    <button id="btn-add-card" onclick="openAddCardModal()" class="hidden items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/20">
-                        <i class="fa-solid fa-plus"></i> Ajouter une carte
-                    </button>
+                    <!-- Boutons Ajouter une carte / Ajout en masse (Admin uniquement + sous-catégorie sélectionnée) -->
+                    <div id="admin-card-actions" class="hidden items-center gap-2">
+                        <button onclick="openBulkAddModal()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-sm font-semibold px-3.5 py-2 rounded-xl transition">
+                            <i class="fa-solid fa-layer-group text-indigo-400"></i> Ajout par paquet
+                        </button>
+                        <button onclick="openAddCardModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                            <i class="fa-solid fa-plus"></i> Ajouter une carte
+                        </button>
+                    </div>
 
                     <!-- Barre de progression de la vue active -->
                     <div class="flex items-center gap-3">
@@ -464,6 +469,54 @@
         </div>
     </div>
 
+    <!-- =========================================================================
+         MODALE 6 : AJOUT EN MASSE / PAR PAQUET (NDJSON OU LISTE)
+         ========================================================================= -->
+    <div id="modal-bulk-cards" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-darkborder">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-layer-group text-indigo-400 text-lg"></i>
+                    <h3 class="font-bold text-lg text-white">Ajouter des cartes par paquet</h3>
+                </div>
+                <button onclick="closeModal('modal-bulk-cards')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="bg-darkbg border border-darkborder rounded-xl p-3.5 mb-4 text-xs text-slate-300 space-y-2">
+                <p class="font-semibold text-indigo-400">Deux formats acceptés (1 carte par ligne) :</p>
+                <ul class="list-disc pl-5 space-y-1 text-slate-400">
+                    <li><strong class="text-slate-200">Lignes brutes de <code>cards.ndjson</code> :</strong> Copie-colle directement les lignes JSON extraites de ton fichier (ex: <code>{"id":"...","title":"Épinal","rarity":"R",...}</code>).</li>
+                    <li><strong class="text-slate-200">Format simple séparé par <code>;</code> :</strong> <code>UUID ; Titre ; Rareté ; URL_Image ; ATK ; DEF</code> (seuls l'UUID et le Titre sont obligatoires).</li>
+                </ul>
+            </div>
+
+            <form onsubmit="saveBulkCards(event)" class="space-y-4">
+                <div>
+                    <textarea id="bulk-cards-input" rows="10" required placeholder='Colle tes lignes ici...&#10;{"id":"550e8400-e29b-41d4-a716-446655440000","title":"Épinal","rarity":"R","atk":450,"def":400}&#10;ou&#10;550e8400-e29b-41d4-a716-446655440001 ; Gérardmer ; SR ; https://... ; 600 ; 550' class="w-full bg-darkbg border border-darkborder focus:border-indigo-500 rounded-xl p-3 text-xs font-mono text-slate-200 placeholder-slate-600 outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="bulk-default-owned" class="w-4 h-4 rounded accent-emerald-500">
+                        <span class="text-xs text-slate-300 font-medium">Marquer toutes ces cartes comme déjà possédées</span>
+                    </label>
+                    <span id="bulk-preview-count" class="text-xs text-slate-400 font-medium">0 ligne détectée</span>
+                </div>
+
+                <div id="bulk-error-box" class="hidden p-3 rounded-xl bg-rose-950/50 border border-rose-500/40 text-xs text-rose-300"></div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('modal-bulk-cards')" class="flex-1 bg-darkbg hover:bg-darkhover border border-darkborder text-slate-300 font-medium py-2.5 rounded-xl transition">
+                        Annuler
+                    </button>
+                    <button type="submit" id="btn-submit-bulk" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
+                        Importer le paquet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION (Remplace alert()) -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
@@ -697,15 +750,15 @@
             const breadcrumb = document.getElementById('breadcrumb');
             const title = document.getElementById('view-title');
             const subtitle = document.getElementById('view-subtitle');
-            const btnAddCard = document.getElementById('btn-add-card');
+            const adminCardActions = document.getElementById('admin-card-actions');
 
-            // Afficher le bouton "Ajouter une carte" uniquement si Admin + une sous-catégorie est ouverte
+            // Afficher les boutons d'ajout uniquement si Admin + une sous-catégorie est ouverte
             if (isAdmin && selectedCollectionId) {
-                btnAddCard.classList.remove('hidden');
-                btnAddCard.classList.add('flex');
+                adminCardActions.classList.remove('hidden');
+                adminCardActions.classList.add('flex');
             } else {
-                btnAddCard.classList.add('hidden');
-                btnAddCard.classList.remove('flex');
+                adminCardActions.classList.add('hidden');
+                adminCardActions.classList.remove('flex');
             }
 
             if (selectedCollectionId) {
@@ -1023,6 +1076,136 @@
             if (error) return showToast("Erreur : " + error.message, "error");
             showToast("Carte supprimée.", "info");
             await loadAllData();
+        }
+
+        // --- AJOUT EN MASSE / PAR PAQUET ---
+        function openBulkAddModal() {
+            document.getElementById('bulk-cards-input').value = '';
+            document.getElementById('bulk-default-owned').checked = false;
+            document.getElementById('bulk-preview-count').textContent = '0 ligne détectée';
+            document.getElementById('bulk-error-box').classList.add('hidden');
+            openModal('modal-bulk-cards');
+        }
+
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'bulk-cards-input') {
+                const lines = e.target.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                document.getElementById('bulk-preview-count').textContent = `${lines.length} ligne${lines.length > 1 ? 's' : ''} détectée${lines.length > 1 ? 's' : ''}`;
+            }
+        });
+
+        async function saveBulkCards(e) {
+            e.preventDefault();
+            if (!selectedCollectionId) return;
+
+            const rawText = document.getElementById('bulk-cards-input').value;
+            const defaultOwned = document.getElementById('bulk-default-owned').checked;
+            const errorBox = document.getElementById('bulk-error-box');
+            const submitBtn = document.getElementById('btn-submit-bulk');
+
+            errorBox.classList.add('hidden');
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) return;
+
+            const parsedCards = [];
+            const errors = [];
+            const validRarities = ['C', 'PC', 'R', 'SR', 'UR', 'L'];
+
+            lines.forEach((line, idx) => {
+                try {
+                    // Cas 1 : Ligne JSON (issue de cards.ndjson)
+                    if (line.startsWith('{')) {
+                        // Nettoyer une éventuelle virgule en fin de ligne
+                        const cleanLine = line.endsWith(',') ? line.slice(0, -1) : line;
+                        const obj = JSON.parse(cleanLine);
+                        const uuid = (obj.id || obj.card_id || '').trim();
+                        const title = (obj.title || obj.name || '').trim();
+                        if (!uuid || !title) throw new Error("Champs 'id' ou 'title' manquants");
+
+                        const rawRarity = String(obj.rarity || 'C').toUpperCase();
+                        parsedCards.push({
+                            collection_id: selectedCollectionId,
+                            card_id: uuid,
+                            title: title,
+                            rarity: validRarities.includes(rawRarity) ? rawRarity : 'C',
+                            image_url: obj.image_url || obj.image || obj.thumbnail || null,
+                            atk: parseInt(obj.atk) || 0,
+                            def: parseInt(obj.def) || 0,
+                            is_owned: defaultOwned,
+                            is_shiny: !!obj.shiny
+                        });
+                    } else {
+                        // Cas 2 : Format CSV/Point-virgule (UUID ; Titre ; Rareté ; Image ; ATK ; DEF)
+                        const parts = line.split(';').map(p => p.trim());
+                        if (parts.length < 2 || !parts[0] || !parts[1]) {
+                            throw new Error("Format invalide (attendu: UUID ; Titre)");
+                        }
+                        const rawRarity = (parts[2] || 'C').toUpperCase();
+                        parsedCards.push({
+                            collection_id: selectedCollectionId,
+                            card_id: parts[0],
+                            title: parts[1],
+                            rarity: validRarities.includes(rawRarity) ? rawRarity : 'C',
+                            image_url: parts[3] || null,
+                            atk: parseInt(parts[4]) || 0,
+                            def: parseInt(parts[5]) || 0,
+                            is_owned: defaultOwned,
+                            is_shiny: false
+                        });
+                    }
+                } catch (err) {
+                    errors.push(`Ligne ${idx + 1} : ${err.message}`);
+                }
+            });
+
+            if (errors.length > 0) {
+                errorBox.innerHTML = `<strong>Erreurs détectées (${errors.length}) :</strong><br>` + errors.slice(0, 5).map(escapeHtml).join('<br>');
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            // Dédupliquer au sein du paquet lui-même et ignorer celles déjà dans la collection
+            const existingUuids = new Set(cards.filter(c => c.collection_id === selectedCollectionId).map(c => c.card_id));
+            const uniqueNewCards = [];
+            const seenInBatch = new Set();
+
+            for (const c of parsedCards) {
+                if (!existingUuids.has(c.card_id) && !seenInBatch.has(c.card_id)) {
+                    seenInBatch.add(c.card_id);
+                    uniqueNewCards.push(c);
+                }
+            }
+
+            if (uniqueNewCards.length === 0) {
+                showToast("Toutes ces cartes sont déjà présentes dans cette collection !", "info");
+                closeModal('modal-bulk-cards');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Import en cours...';
+
+            try {
+                // Envoi par lots de 200 pour éviter toute limite de requête
+                const CHUNK_SIZE = 200;
+                for (let i = 0; i < uniqueNewCards.length; i += CHUNK_SIZE) {
+                    const chunk = uniqueNewCards.slice(i, i + CHUNK_SIZE);
+                    const { error } = await supabaseClient.from('collection_cards').insert(chunk);
+                    if (error) throw error;
+                }
+
+                closeModal('modal-bulk-cards');
+                const skipped = parsedCards.length - uniqueNewCards.length;
+                showToast(`${uniqueNewCards.length} carte(s) importée(s) !` + (skipped > 0 ? ` (${skipped} doublon(s) ignoré(s))` : ''), "success");
+                await loadAllData();
+            } catch (err) {
+                console.error(err);
+                errorBox.textContent = "Erreur Supabase : " + err.message;
+                errorBox.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Importer le paquet";
+            }
         }
 
         // --- SYNCHRONISATION AVEC MA-VITRINE-WIKIMASTERS.JSON ---
