@@ -1032,9 +1032,29 @@
             let scopedCards = cards;
             if (selectedCollectionId) {
                 scopedCards = cards.filter(c => c.collection_id === selectedCollectionId);
-            } else if (selectedCategoryId) {
-                const colIds = collections.filter(col => col.category_id === selectedCategoryId).map(col => col.id);
-                scopedCards = cards.filter(c => colIds.includes(c.collection_id));
+            } else {
+                const rawScoped = selectedCategoryId
+                    ? cards.filter(c => collections.filter(col => col.category_id === selectedCategoryId).some(col => col.id === c.collection_id))
+                    : cards;
+
+                // Dédupliquer les cartes lorsqu'on affiche une catégorie globale ou "Tout voir"
+                const uniqueMap = new Map();
+                for (const c of rawScoped) {
+                    const key = (c.card_id && !c.card_id.startsWith('00000000-0000-4000-8000-'))
+                        ? c.card_id
+                        : c.title.trim().toLowerCase();
+
+                    if (!uniqueMap.has(key)) {
+                        uniqueMap.set(key, { ...c, _subCount: 1 });
+                    } else {
+                        const existing = uniqueMap.get(key);
+                        existing._subCount += 1;
+                        if (c.is_owned) existing.is_owned = true;
+                        if (c.is_shiny) existing.is_shiny = true;
+                        if (!existing.image_url && c.image_url) existing.image_url = c.image_url;
+                    }
+                }
+                scopedCards = Array.from(uniqueMap.values());
             }
 
             // Mise à jour de la barre de progression de la vue active
@@ -1124,7 +1144,7 @@
 
                         <!-- Infos bas de carte (Titre uniquement, épuré sans ATK/DEF) -->
                         <div class="p-2.5 flex-1 flex flex-col justify-center">
-                            ${!selectedCollectionId && colObj ? `<div class="text-[10px] font-semibold text-indigo-400 truncate mb-0.5">${escapeHtml(colObj.name)}</div>` : ''}
+                            ${!selectedCollectionId ? `<div class="text-[10px] font-semibold text-indigo-400 truncate mb-0.5">${card._subCount > 1 ? `Dans ${card._subCount} sous-collections` : (colObj ? escapeHtml(colObj.name) : '')}</div>` : ''}
                             <h3 class="font-bold text-xs sm:text-sm text-white leading-snug line-clamp-2" title="${escapeHtml(card.title)}">${escapeHtml(card.title)}</h3>
                         </div>
                     </div>
