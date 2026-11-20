@@ -1572,6 +1572,22 @@
                 }
             }
 
+            // Dédupliquer par card_id et ignorer celles déjà présentes dans cette sous-catégorie
+            const existingIdsInCol = new Set(
+                cards.filter(c => c.collection_id === selectedCollectionId).map(c => c.card_id)
+            );
+            const seenBatchIds = new Set();
+            const uniqueNewCards = fetchedCards.filter(c => {
+                if (existingIdsInCol.has(c.card_id) || seenBatchIds.has(c.card_id)) return false;
+                seenBatchIds.add(c.card_id);
+                return true;
+            });
+
+            if (errors.length > 0) {
+                errorBox.innerHTML = `<div class="font-bold mb-1">${errors.length} article(s) non trouvé(s) :</div>` + errors.map(e => `<div>• ${escapeHtml(e)}</div>`).join('');
+                errorBox.classList.remove('hidden');
+            }
+
             try {
                 if (uniqueNewCards.length > 0) {
                     const CHUNK_SIZE = 200;
