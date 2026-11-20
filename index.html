@@ -92,6 +92,14 @@
         .rarity-SR { background: #f472b6; color: #500724; border: 1px solid #f9a8d4; }
         .rarity-UR { background: #fb923c; color: #431407; border: 1px solid #fdba74; }
         .rarity-L  { background: #fde047; color: #422006; border: 1px solid #fef08a; box-shadow: 0 0 8px rgba(253, 224, 71, 0.4); }
+
+        /* Bordures colorées selon la rareté pour les cartes possédées (style Screen 2) */
+        .border-rarity-C  { border-color: #34d399 !important; }
+        .border-rarity-PC { border-color: #60a5fa !important; }
+        .border-rarity-R  { border-color: #a78bfa !important; }
+        .border-rarity-SR { border-color: #f472b6 !important; }
+        .border-rarity-UR { border-color: #fb923c !important; }
+        .border-rarity-L  { border-color: #fde047 !important; box-shadow: 0 0 12px rgba(253, 224, 71, 0.25); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -152,36 +160,61 @@
     </header>
 
     <!-- CONTENU PRINCIPAL -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col lg:flex-row gap-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
 
-        <!-- SIDEBAR GAUCHE : CATÉGORIES & SOUS-CATÉGORIES -->
-        <aside class="w-full lg:w-72 shrink-0 flex flex-col gap-4">
-            <div class="bg-darkcard border border-darkborder rounded-2xl p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Catégories</h2>
-                    <button onclick="selectAllCollections()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+        <!-- SECTION 1 : TUILES DES CATÉGORIES (STYLE SCREEN 2, RÉTRACTABLE) -->
+        <section class="bg-darkcard border border-darkborder rounded-2xl p-5">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-lg sm:text-xl font-bold text-white">Collections</h2>
+                    <button onclick="selectAllCollections()" class="text-xs bg-darkbg hover:bg-darkhover border border-darkborder text-indigo-400 px-3 py-1 rounded-lg font-medium transition">
                         Tout voir
                     </button>
                 </div>
+                <button onclick="toggleCategoriesSection()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-darkbg hover:bg-darkhover border border-darkborder px-3 py-1.5 rounded-xl transition">
+                    <i id="cat-collapse-icon" class="fa-solid fa-chevron-up transition-transform"></i>
+                    <span id="cat-collapse-label">Réduire</span>
+                </button>
+            </div>
 
-                <!-- Liste dynamique des catégories et sous-catégories -->
-                <div id="sidebar-tree" class="space-y-2">
-                    <div class="text-center py-6 text-slate-500 text-sm">
+            <!-- Grille de tuiles des Catégories -->
+            <div id="categories-tiles-wrapper" class="mt-4">
+                <div id="categories-tiles-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    <div class="col-span-full text-center py-6 text-slate-500 text-sm">
                         <i class="fa-solid fa-spinner fa-spin mr-2"></i>Chargement...
                     </div>
                 </div>
             </div>
-        </aside>
+        </section>
 
-        <!-- ZONE DE DROITE : EN-TÊTE COLLECTION + FILTRES + GRILLE DE CARTES -->
-        <section class="flex-1 flex flex-col gap-5 min-w-0">
+        <!-- SECTION 2 : TUILES DES SOUS-CATÉGORIES (RÉTRACTABLE) -->
+        <section id="subcollections-section" class="hidden bg-darkcard border border-darkborder rounded-2xl p-5">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <h3 id="subcollections-heading" class="text-base sm:text-lg font-bold text-white">Sous-collections</h3>
+                    <span id="subcollections-count-badge" class="text-xs bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-full font-semibold">0</span>
+                </div>
+                <button onclick="toggleSubcollectionsSection()" class="flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white bg-darkbg hover:bg-darkhover border border-darkborder px-3 py-1.5 rounded-xl transition">
+                    <i id="sub-collapse-icon" class="fa-solid fa-chevron-up transition-transform"></i>
+                    <span id="sub-collapse-label">Réduire</span>
+                </button>
+            </div>
+
+            <!-- Grille de tuiles des Sous-catégories -->
+            <div id="subcollections-tiles-wrapper" class="mt-4">
+                <div id="subcollections-tiles-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+            </div>
+        </section>
+
+        <!-- SECTION 3 : EN-TÊTE COLLECTION ACTIVE + FILTRES + GRILLE DE CARTES -->
+        <section class="flex flex-col gap-4 min-w-0">
 
             <!-- En-tête de la vue active -->
             <div class="bg-darkcard border border-darkborder rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <div id="breadcrumb" class="text-xs font-medium text-indigo-400 mb-1">Vue d'ensemble</div>
                     <h2 id="view-title" class="text-xl sm:text-2xl font-bold text-white">Toutes les collections</h2>
-                    <p id="view-subtitle" class="text-sm text-slate-400 mt-0.5">Sélectionne une sous-catégorie à gauche pour explorer tes cartes.</p>
+                    <p id="view-subtitle" class="text-sm text-slate-400 mt-0.5">Sélectionne une tuile ci-dessus pour filtrer tes cartes.</p>
                 </div>
 
                 <div class="flex flex-col sm:items-end gap-2">
@@ -240,7 +273,7 @@
             </div>
 
             <!-- Grille de cartes -->
-            <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3.5">
                 <!-- Les cartes seront injectées ici -->
             </div>
 
@@ -533,6 +566,8 @@
         let selectedCategoryId = null;
         let selectedCollectionId = null;
         let statusFilter = 'all'; // 'all', 'owned', 'missing'
+        let isCategoriesCollapsed = false;
+        let isSubcollectionsCollapsed = false;
 
         const RARITY_ORDER = { 'L': 6, 'UR': 5, 'SR': 4, 'R': 3, 'PC': 2, 'C': 1 };
 
@@ -573,7 +608,7 @@
                 // Écouter les changements d'authentification
                 supabaseClient.auth.onAuthStateChange((_event, session) => {
                     updateAuthState(!!session);
-                    renderSidebar();
+                    renderTiles();
                     renderCards();
                 });
 
@@ -602,7 +637,7 @@
                 cards = cardRes.data || [];
 
                 updateGlobalProgress();
-                renderSidebar();
+                renderTiles();
                 updateViewHeader();
                 renderCards();
                 populateAdminStructureModal();
@@ -611,108 +646,141 @@
                 showToast("Impossible de charger les données. Vérifie que le script SQL a bien été exécuté.", "error");
             }
         }
+        // --- NAVIGATION PAR TUILES (CATÉGORIES & SOUS-CATÉGORIES) ---
+        function toggleCategoriesSection() {
+            isCategoriesCollapsed = !isCategoriesCollapsed;
+            const wrapper = document.getElementById('categories-tiles-wrapper');
+            const icon = document.getElementById('cat-collapse-icon');
+            const label = document.getElementById('cat-collapse-label');
 
-        // --- AUTHENTIFICATION ADMIN ---
-        function updateAuthState(loggedIn) {
-            isAdmin = loggedIn;
-            const btnAuth = document.getElementById('btn-auth');
-            const authIcon = document.getElementById('auth-icon');
-            const authLabel = document.getElementById('auth-label');
-            const btnSync = document.getElementById('btn-sync-json');
-            const btnStruct = document.getElementById('btn-manage-structure');
-
-            if (isAdmin) {
-                authIcon.className = "fa-solid fa-unlock text-emerald-400";
-                authLabel.textContent = "Déconnexion";
-                btnAuth.classList.add('border-emerald-500/40');
-                btnSync.classList.remove('hidden');
-                btnSync.classList.add('flex');
-                btnStruct.classList.remove('hidden');
-                btnStruct.classList.add('flex');
-            } else {
-                authIcon.className = "fa-solid fa-lock text-slate-400";
-                authLabel.textContent = "Admin";
-                btnAuth.classList.remove('border-emerald-500/40');
-                btnSync.classList.add('hidden');
-                btnSync.classList.remove('flex');
-                btnStruct.classList.add('hidden');
-                btnStruct.classList.remove('flex');
-            }
-            updateViewHeader();
+            wrapper.classList.toggle('hidden', isCategoriesCollapsed);
+            icon.style.transform = isCategoriesCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+            label.textContent = isCategoriesCollapsed ? 'Afficher' : 'Réduire';
         }
 
-        async function handleAuthClick() {
-            if (isAdmin) {
-                await supabaseClient.auth.signOut();
-                showToast("Déconnecté du mode Admin.", "info");
-            } else {
-                openModal('modal-login');
-            }
+        function toggleSubcollectionsSection() {
+            isSubcollectionsCollapsed = !isSubcollectionsCollapsed;
+            const wrapper = document.getElementById('subcollections-tiles-wrapper');
+            const icon = document.getElementById('sub-collapse-icon');
+            const label = document.getElementById('sub-collapse-label');
+
+            wrapper.classList.toggle('hidden', isSubcollectionsCollapsed);
+            icon.style.transform = isSubcollectionsCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+            label.textContent = isSubcollectionsCollapsed ? 'Afficher' : 'Réduire';
         }
 
-        async function submitLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
+        function renderTiles() {
+            const catGrid = document.getElementById('categories-tiles-grid');
+            const subSection = document.getElementById('subcollections-section');
+            const subGrid = document.getElementById('subcollections-tiles-grid');
 
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) {
-                showToast("Identifiants incorrects : " + error.message, "error");
-            } else {
-                closeModal('modal-login');
-                showToast("Mode Admin activé !", "success");
-            }
-        }
-
-        // --- NAVIGATION SIDEBAR ---
-        function renderSidebar() {
-            const container = document.getElementById('sidebar-tree');
             if (categories.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-6 px-2 text-slate-500 text-xs">
+                catGrid.innerHTML = `
+                    <div class="col-span-full text-center py-6 px-2 text-slate-500 text-xs">
                         Aucune catégorie créée.<br>
                         ${isAdmin ? '<span class="text-indigo-400">Clique sur "Catégories" en haut pour démarrer !</span>' : 'Connecte-toi en Admin pour créer tes collections.'}
                     </div>
                 `;
+                subSection.classList.add('hidden');
                 return;
             }
 
-            container.innerHTML = categories.map(cat => {
+            // 1. Rendu des grandes tuiles Catégories (avec cercle SVG de progression)
+            catGrid.innerHTML = categories.map(cat => {
                 const catCols = collections.filter(c => c.category_id === cat.id);
-                const isCatActive = selectedCategoryId === cat.id && !selectedCollectionId;
+                const colIds = catCols.map(c => c.id);
+                const catCards = cards.filter(c => colIds.includes(c.collection_id));
+                const ownedCount = catCards.filter(c => c.is_owned).length;
+                const totalCount = catCards.length;
+                const missingCount = totalCount - ownedCount;
+                const pct = totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
+                const isCompleted = totalCount > 0 && ownedCount === totalCount;
 
-                const subHtml = catCols.map(col => {
-                    const colCards = cards.filter(c => c.collection_id === col.id);
-                    const ownedCount = colCards.filter(c => c.is_owned).length;
-                    const totalCount = colCards.length;
-                    const pct = totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
-                    const isColActive = selectedCollectionId === col.id;
+                let completedSubCount = 0;
+                catCols.forEach(col => {
+                    const cCards = cards.filter(c => c.collection_id === col.id);
+                    if (cCards.length > 0 && cCards.every(c => c.is_owned)) completedSubCount++;
+                });
 
-                    return `
-                        <button onclick="selectCollection('${col.id}')" class="w-full text-left pl-7 pr-3 py-2 rounded-xl text-xs flex items-center justify-between gap-2 transition ${isColActive ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20' : 'text-slate-400 hover:bg-darkhover hover:text-slate-200'}">
-                            <span class="truncate">${escapeHtml(col.name)}</span>
-                            <span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md ${isColActive ? 'bg-indigo-500 text-white' : (pct === 100 && totalCount > 0 ? 'bg-emerald-500/20 text-emerald-400 font-bold' : 'bg-darkbg text-slate-400')}">
-                                ${ownedCount}/${totalCount}
-                            </span>
-                        </button>
-                    `;
-                }).join('');
+                const isSelected = selectedCategoryId === cat.id;
+                const radius = 20;
+                const circumference = 2 * Math.PI * radius;
+                const dashOffset = circumference - (pct / 100) * circumference;
+                const strokeColor = isCompleted ? '#10b981' : (pct >= 50 ? '#facc15' : '#6366f1');
 
                 return `
-                    <div class="space-y-1">
-                        <button onclick="selectCategory('${cat.id}')" class="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold flex items-center justify-between transition ${isCatActive ? 'bg-darkhover text-indigo-400 border border-indigo-500/30' : 'text-slate-200 hover:bg-darkhover'}">
-                            <span class="flex items-center gap-2 truncate">
-                                <span>${escapeHtml(cat.icon || '📁')}</span>
-                                <span class="truncate">${escapeHtml(cat.name)}</span>
+                    <button onclick="selectCategory('${cat.id}')" class="text-left bg-darkbg hover:bg-darkhover border ${isSelected ? 'border-amber-400 ring-1 ring-amber-400/50 bg-darkhover' : 'border-darkborder'} rounded-2xl p-4 flex items-center gap-4 transition group">
+                        <!-- Cercle de progression -->
+                        <div class="relative w-13 h-13 shrink-0 flex items-center justify-center">
+                            <svg class="w-13 h-13 -rotate-90" viewBox="0 0 48 48">
+                                <circle cx="24" cy="24" r="${radius}" fill="none" stroke="#1f2736" stroke-width="4"></circle>
+                                <circle cx="24" cy="24" r="${radius}" fill="none" stroke="${strokeColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"></circle>
+                            </svg>
+                            <span class="absolute text-xs font-extrabold ${isCompleted ? 'text-emerald-400' : 'text-white'}">
+                                ${isCompleted ? '<i class="fa-solid fa-check"></i>' : pct + '%'}
                             </span>
-                            <span class="text-xs text-slate-500">${catCols.length}</span>
-                        </button>
-                        <div class="space-y-0.5">
-                            ${subHtml || '<div class="pl-8 py-1 text-[11px] text-slate-600 italic">Aucune sous-catégorie</div>'}
                         </div>
-                    </div>
+
+                        <!-- Infos de la catégorie -->
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-sm sm:text-base text-white truncate group-hover:text-indigo-300 transition">
+                                ${escapeHtml(cat.icon || '📁')} ${escapeHtml(cat.name)}
+                            </div>
+                            <div class="text-xs text-slate-300 mt-0.5">
+                                <strong class="text-white">${ownedCount}</strong> / ${totalCount} cartes
+                            </div>
+                            <div class="text-[11px] text-slate-500 mt-1 flex flex-wrap items-center gap-x-2">
+                                <span>${missingCount} manquante${missingCount > 1 ? 's' : ''}</span>
+                                <span>• ✓ ${completedSubCount} / ${catCols.length} sous-collections</span>
+                            </div>
+                        </div>
+                    </button>
                 `;
             }).join('');
+
+            // 2. Rendu des tuiles Sous-catégories si une catégorie est sélectionnée
+            if (selectedCategoryId) {
+                const activeCat = categories.find(c => c.id === selectedCategoryId);
+                const subCols = collections.filter(c => c.category_id === selectedCategoryId);
+
+                subSection.classList.remove('hidden');
+                document.getElementById('subcollections-heading').textContent = `Sous-collections • ${activeCat ? activeCat.name : ''}`;
+                document.getElementById('subcollections-count-badge').textContent = subCols.length;
+
+                if (subCols.length === 0) {
+                    subGrid.innerHTML = `<div class="col-span-full text-xs text-slate-500 italic py-2">Aucune sous-catégorie dans ce dossier.</div>`;
+                } else {
+                    subGrid.innerHTML = subCols.map(col => {
+                        const colCards = cards.filter(c => c.collection_id === col.id);
+                        const ownedCount = colCards.filter(c => c.is_owned).length;
+                        const totalCount = colCards.length;
+                        const missingCount = totalCount - ownedCount;
+                        const pct = totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
+                        const isCompleted = totalCount > 0 && ownedCount === totalCount;
+                        const isSubSelected = selectedCollectionId === col.id;
+
+                        return `
+                            <button onclick="selectCollection('${col.id}')" class="text-left bg-darkbg hover:bg-darkhover border ${isSubSelected ? 'border-indigo-500 ring-1 ring-indigo-500/50 bg-darkhover' : (isCompleted ? 'border-emerald-500/40' : 'border-darkborder')} rounded-xl p-3.5 flex flex-col justify-between gap-2.5 transition">
+                                <div class="flex items-start justify-between gap-2">
+                                    <span class="font-bold text-xs sm:text-sm text-white line-clamp-1">${escapeHtml(col.name)}</span>
+                                    ${isCompleted ? '<span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] shrink-0"><i class="fa-solid fa-check"></i></span>' : ''}
+                                </div>
+
+                                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full ${isCompleted ? 'bg-emerald-500' : 'bg-amber-400'} transition-all duration-300" style="width: ${pct}%"></div>
+                                </div>
+
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-400">${ownedCount} / ${totalCount} ${missingCount > 0 ? `(${missingCount} à trouver)` : ''}</span>
+                                    <span class="font-bold ${isCompleted ? 'text-emerald-400' : 'text-slate-200'}">${pct} %</span>
+                                </div>
+                            </button>
+                        `;
+                    }).join('');
+                }
+            } else {
+                subSection.classList.add('hidden');
+            }
         }
 
         function resetNavigation() {
@@ -722,7 +790,26 @@
         function selectAllCollections() {
             selectedCategoryId = null;
             selectedCollectionId = null;
-            renderSidebar();
+            renderTiles();
+            updateViewHeader();
+            renderCards();
+        }
+
+        function selectCategory(catId) {
+            selectedCategoryId = catId;
+            selectedCollectionId = null;
+            // Ouvrir automatiquement les sous-collections quand on clique sur une catégorie
+            if (isSubcollectionsCollapsed) toggleSubcollectionsSection();
+            renderTiles();
+            updateViewHeader();
+            renderCards();
+        }
+
+        function selectCollection(colId) {
+            const col = collections.find(c => c.id === colId);
+            selectedCollectionId = colId;
+            selectedCategoryId = col ? col.category_id : null;
+            renderTiles();
             updateViewHeader();
             renderCards();
         }
@@ -858,24 +945,25 @@
                 const colObj = collections.find(c => c.id === card.collection_id);
                 const fallbackImg = `https://placehold.co/300x400/131822/64748b?text=${encodeURIComponent(card.title)}`;
                 const imgSrc = card.image_url || fallbackImg;
+                const rarityBorderClass = card.is_owned ? `border-2 border-rarity-${card.rarity}` : 'border border-darkborder';
 
                 return `
-                    <div class="group relative bg-darkcard border border-darkborder rounded-2xl overflow-hidden flex flex-col transition duration-300 hover:-translate-y-1 hover:border-slate-600 ${card.is_owned ? (card.is_shiny ? 'shiny-card' : 'shadow-lg') : 'opacity-55 grayscale hover:opacity-80'}">
+                    <div class="group relative bg-darkcard ${rarityBorderClass} rounded-2xl overflow-hidden flex flex-col transition duration-300 hover:-translate-y-1 ${card.is_owned ? (card.is_shiny ? 'shiny-card' : 'shadow-lg') : 'opacity-50 grayscale hover:opacity-80'}">
                         
                         <!-- Image de la carte -->
                         <div class="relative aspect-[3/4] bg-slate-900 overflow-hidden">
                             <img src="${escapeHtml(imgSrc)}" onerror="this.src='${fallbackImg}'" alt="${escapeHtml(card.title)}" loading="lazy" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
                             
                             <!-- Dégradé bas pour lisibilité -->
-                            <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-darkcard via-darkcard/60 to-transparent"></div>
+                            <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-darkcard via-darkcard/60 to-transparent"></div>
 
                             <!-- Badge Rareté (Haut Gauche) -->
-                            <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[11px] font-extrabold tracking-wide shadow ${'rarity-' + card.rarity}">
+                            <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-extrabold tracking-wide shadow ${'rarity-' + card.rarity}">
                                 ${escapeHtml(card.rarity)}
                             </span>
 
                             <!-- Statut Possédée / Shiny (Haut Droite) -->
-                            <div class="absolute top-2.5 right-2.5 flex items-center gap-1">
+                            <div class="absolute top-2 right-2 flex items-center gap-1">
                                 ${card.is_shiny ? '<span title="Brillante (Shiny)" class="w-6 h-6 rounded-full bg-amber-400/90 text-slate-950 flex items-center justify-center text-xs shadow">✨</span>' : ''}
                                 ${card.is_owned 
                                     ? '<span title="Possédée" class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow"><i class="fa-solid fa-check"></i></span>'
@@ -899,18 +987,10 @@
                             ` : ''}
                         </div>
 
-                        <!-- Infos bas de carte -->
-                        <div class="p-3 flex-1 flex flex-col justify-between">
-                            <div>
-                                ${!selectedCollectionId && colObj ? `<div class="text-[10px] font-semibold text-indigo-400 truncate mb-0.5">${escapeHtml(colObj.name)}</div>` : ''}
-                                <h3 class="font-bold text-sm text-white leading-snug line-clamp-2" title="${escapeHtml(card.title)}">${escapeHtml(card.title)}</h3>
-                            </div>
-
-                            <!-- Stats ATK / DEF -->
                         <!-- Infos bas de carte (Titre uniquement, épuré sans ATK/DEF) -->
-                        <div class="p-3 flex-1 flex flex-col justify-center">
+                        <div class="p-2.5 flex-1 flex flex-col justify-center">
                             ${!selectedCollectionId && colObj ? `<div class="text-[10px] font-semibold text-indigo-400 truncate mb-0.5">${escapeHtml(colObj.name)}</div>` : ''}
-                            <h3 class="font-bold text-sm text-white leading-snug line-clamp-2" title="${escapeHtml(card.title)}">${escapeHtml(card.title)}</h3>
+                            <h3 class="font-bold text-xs sm:text-sm text-white leading-snug line-clamp-2" title="${escapeHtml(card.title)}">${escapeHtml(card.title)}</h3>
                         </div>
                     </div>
                 `;
