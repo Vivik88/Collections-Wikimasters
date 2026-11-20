@@ -772,21 +772,42 @@
         }
 
         // --- CHARGEMENT DES DONNÉES ---
+        async function fetchAllCardsPaginated() {
+            const PAGE_SIZE = 1000;
+            let allRows = [];
+            let from = 0;
+
+            while (true) {
+                const { data, error } = await supabaseClient
+                    .from('collection_cards')
+                    .select('*')
+                    .order('id', { ascending: true })
+                    .range(from, from + PAGE_SIZE - 1);
+
+                if (error) throw error;
+                if (!data || data.length === 0) break;
+
+                allRows = allRows.concat(data);
+                if (data.length < PAGE_SIZE) break;
+                from += PAGE_SIZE;
+            }
+            return allRows;
+        }
+
         async function loadAllData() {
             try {
-                const [catRes, colRes, cardRes] = await Promise.all([
+                const [catRes, colRes, allCards] = await Promise.all([
                     supabaseClient.from('categories').select('*').order('sort_order', { ascending: true }).order('name', { ascending: true }),
                     supabaseClient.from('collections').select('*').order('sort_order', { ascending: true }).order('name', { ascending: true }),
-                    supabaseClient.from('collection_cards').select('*')
+                    fetchAllCardsPaginated()
                 ]);
 
                 if (catRes.error) throw catRes.error;
                 if (colRes.error) throw colRes.error;
-                if (cardRes.error) throw cardRes.error;
 
                 categories = catRes.data || [];
                 collections = colRes.data || [];
-                cards = cardRes.data || [];
+                cards = allCards;
 
                 updateGlobalProgress();
                 renderTiles();
@@ -1481,7 +1502,7 @@
             const fetchedCards = [];
             const errors = [];
 
-            const BATCH_SIZE = 5;
+            const BATCH_SIZE = 3;
             for (let i = 0; i < lines.length; i += BATCH_SIZE) {
                 const batch = lines.slice(i, i + BATCH_SIZE);
                 await Promise.all(batch.map(async (line) => {
@@ -1508,7 +1529,7 @@
                         }
                     }
 
-                    // Cas 2 : Simple nom d'article Wikipedia
+                    // Cas 2 : Simple nom d'article Wikipedia (avec 1 tentative de réessai si rate-limit)
                     try {
                         const info = await fetchWikiCardInfo(line);
                         fetchedCards.push({
@@ -1521,7 +1542,21 @@
                             is_shiny: false
                         });
                     } catch (err) {
-                        errors.push(err.message);
+                        await new Promise(r => setTimeout(r, 600));
+                        try {
+                            const retryInfo = await fetchWikiCardInfo(line);
+                            fetchedCards.push({
+                                collection_id: selectedCollectionId,
+                                card_id: retryInfo.card_id,
+                                title: retryInfo.title,
+                                rarity: retryInfo.rarity,
+                                image_url: retryInfo.image_url,
+                                is_owned: defaultOwned,
+                                is_shiny: false
+                            });
+                        } catch (retryErr) {
+                            errors.push(retryErr.message);
+                        }
                     }
                 }));
 
@@ -1530,24 +1565,10 @@
                 progressLabel.textContent = `Analyse : ${done} / ${lines.length}`;
                 progressPct.textContent = `${pct}%`;
                 progressBar.style.width = `${pct}%`;
-            }
 
-            if (errors.length > 0) {
-                errorBox.innerHTML = `<strong>Articles non trouvés (${errors.length}) :</strong><br>` + errors.map(escapeHtml).join('<br>');
-                errorBox.classList.remove('hidden');
-            }
-
-            // Dédupliquer par rapport aux cartes déjà dans la collection
-            const existingUuids = new Set(cards.filter(c => c.collection_id === selectedCollectionId).map(c => c.card_id));
-            const existingTitles = new Set(cards.filter(c => c.collection_id === selectedCollectionId).map(c => c.title.toLowerCase()));
-            const uniqueNewCards = [];
-            const seenInBatch = new Set();
-
-            for (const c of fetchedCards) {
-                const normTitle = c.title.toLowerCase();
-                if (!existingUuids.has(c.card_id) && !existingTitles.has(normTitle) && !seenInBatch.has(c.card_id)) {
-                    seenInBatch.add(c.card_id);
-                    uniqueNewCards.push(c);
+                // Petite pause entre chaque lot pour éviter le blocage API Wikipedia
+                if (i + BATCH_SIZE < lines.length) {
+                    await new Promise(r => setTimeout(r, 250));
                 }
             }
 
