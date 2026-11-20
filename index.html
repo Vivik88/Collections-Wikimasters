@@ -1579,30 +1579,39 @@
 
                     for (const line of lines) {
                         if (!line) continue;
-                        // Pré-filtrage ultra rapide avant JSON.parse
+                        // Détection rapide : soit le titre brut, soit un échappement unicode (\u) présent dans la ligne
                         const lowerLine = line.toLowerCase();
-                        for (const [titleKey, dbCards] of cardsByTitle.entries()) {
-                            if (!matchedTitles.has(titleKey) && lowerLine.includes(titleKey)) {
-                                try {
-                                    const obj = JSON.parse(line);
-                                    const objTitle = (obj.title || obj.name || '').trim().toLowerCase();
-                                    const realUuid = obj.id || obj.card_id;
-                                    if (objTitle === titleKey && realUuid) {
-                                        matchedTitles.add(titleKey);
-                                        for (const dbCard of dbCards) {
-                                            if (dbCard.card_id !== realUuid || (!dbCard.image_url && obj.image_url)) {
-                                                matchedPatches.push({
-                                                    id: dbCard.id,
-                                                    card_id: realUuid,
-                                                    rarity: obj.rarity || dbCard.rarity,
-                                                    image_url: dbCard.image_url || obj.image_url || null
-                                                });
-                                            }
-                                        }
-                                    }
-                                } catch (_) {}
+                        const hasUnicodeEscape = lowerLine.includes('\\u');
+                        let shouldParse = hasUnicodeEscape;
+                        if (!shouldParse) {
+                            for (const titleKey of cardsByTitle.keys()) {
+                                if (!matchedTitles.has(titleKey) && lowerLine.includes(titleKey)) {
+                                    shouldParse = true;
+                                    break;
+                                }
                             }
                         }
+                        if (!shouldParse) continue;
+
+                        try {
+                            const obj = JSON.parse(line);
+                            const rawTitle = obj.title || obj.name || obj.label || obj.article || obj.wiki_title || '';
+                            const objTitle = String(rawTitle).replace(/_/g, ' ').trim().toLowerCase();
+                            const realUuid = obj.id || obj.card_id || obj.uuid;
+                            if (objTitle && realUuid && cardsByTitle.has(objTitle) && !matchedTitles.has(objTitle)) {
+                                matchedTitles.add(objTitle);
+                                for (const dbCard of cardsByTitle.get(objTitle)) {
+                                    if (dbCard.card_id !== realUuid || (!dbCard.image_url && obj.image_url)) {
+                                        matchedPatches.push({
+                                            id: dbCard.id,
+                                            card_id: realUuid,
+                                            rarity: obj.rarity || dbCard.rarity,
+                                            image_url: dbCard.image_url || obj.image_url || obj.image || null
+                                        });
+                                    }
+                                }
+                            }
+                        } catch (_) {}
                     }
 
                     // Si on a déjà trouvé toutes nos cartes, on peut arrêter la lecture immédiatement !
