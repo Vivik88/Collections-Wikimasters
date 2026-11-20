@@ -619,6 +619,55 @@
             }
         }
 
+        // --- GESTION AUTHENTIFICATION ADMIN ---
+        function updateAuthState(loggedIn) {
+            isAdmin = loggedIn;
+            const authIcon = document.getElementById('auth-icon');
+            const authLabel = document.getElementById('auth-label');
+            const btnSync = document.getElementById('btn-sync-json');
+            const btnStruct = document.getElementById('btn-manage-structure');
+
+            if (isAdmin) {
+                authIcon.className = "fa-solid fa-right-from-bracket text-emerald-400";
+                authLabel.textContent = "Déconnexion";
+                btnSync.classList.remove('hidden');
+                btnSync.classList.add('flex');
+                btnStruct.classList.remove('hidden');
+                btnStruct.classList.add('flex');
+            } else {
+                authIcon.className = "fa-solid fa-lock text-slate-400";
+                authLabel.textContent = "Admin";
+                btnSync.classList.add('hidden');
+                btnSync.classList.remove('flex');
+                btnStruct.classList.add('hidden');
+                btnStruct.classList.remove('flex');
+            }
+            updateViewHeader();
+        }
+
+        async function handleAuthClick() {
+            if (isAdmin) {
+                await supabaseClient.auth.signOut();
+                showToast("Déconnecté du mode Admin.", "info");
+            } else {
+                openModal('modal-login');
+            }
+        }
+
+        async function submitLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                showToast("Identifiants incorrects : " + error.message, "error");
+                return;
+            }
+            closeModal('modal-login');
+            showToast("Mode Admin activé !", "success");
+        }
+
         // --- CHARGEMENT DES DONNÉES ---
         async function loadAllData() {
             try {
@@ -810,23 +859,6 @@
             selectedCollectionId = colId;
             selectedCategoryId = col ? col.category_id : null;
             renderTiles();
-            updateViewHeader();
-            renderCards();
-        }
-
-        function selectCategory(catId) {
-            selectedCategoryId = catId;
-            selectedCollectionId = null;
-            renderSidebar();
-            updateViewHeader();
-            renderCards();
-        }
-
-        function selectCollection(colId) {
-            const col = collections.find(c => c.id === colId);
-            selectedCollectionId = colId;
-            selectedCategoryId = col ? col.category_id : null;
-            renderSidebar();
             updateViewHeader();
             renderCards();
         }
