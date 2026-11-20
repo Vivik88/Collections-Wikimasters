@@ -85,13 +85,13 @@
             100% { transform: translateX(100%) rotate(25deg); }
         }
 
-        /* Badges de rareté Wikimasters */
-        .rarity-C  { background: #334155; color: #f8fafc; border: 1px solid #475569; }
-        .rarity-PC { background: #065f46; color: #a7f3d0; border: 1px solid #10b981; }
-        .rarity-R  { background: #1e40af; color: #bfdbfe; border: 1px solid #3b82f6; }
-        .rarity-SR { background: #6b21a8; color: #e9d5ff; border: 1px solid #a855f7; }
-        .rarity-UR { background: #9a3412; color: #fed7aa; border: 1px solid #f97316; }
-        .rarity-L  { background: linear-gradient(135deg, #b45309, #eab308); color: #fff; border: 1px solid #fef08a; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        /* Badges de rareté Wikimasters (couleurs fidèles au jeu) */
+        .rarity-C  { background: #a7f3d0; color: #064e3b; border: 1px solid #6ee7b7; }
+        .rarity-PC { background: #bfdbfe; color: #1e3a8a; border: 1px solid #93c5fd; }
+        .rarity-R  { background: #ddd6fe; color: #4c1d95; border: 1px solid #c4b5fd; }
+        .rarity-SR { background: #f472b6; color: #500724; border: 1px solid #f9a8d4; }
+        .rarity-UR { background: #fb923c; color: #431407; border: 1px solid #fdba74; }
+        .rarity-L  { background: #fde047; color: #422006; border: 1px solid #fef08a; box-shadow: 0 0 8px rgba(253, 224, 71, 0.4); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -235,8 +235,6 @@
                 <select id="filter-sort" onchange="renderCards()" class="bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs font-medium text-slate-300 outline-none focus:border-indigo-500">
                     <option value="title_asc">Nom (A → Z)</option>
                     <option value="rarity_desc">Rareté (L → C)</option>
-                    <option value="atk_desc">ATK (Haut → Bas)</option>
-                    <option value="def_desc">DEF (Haut → Bas)</option>
                     <option value="owned_first">Possédées d'abord</option>
                 </select>
             </div>
@@ -250,113 +248,7 @@
     </main>
 
     <!-- =========================================================================
-         MODALE 1 : CONFIGURATION SUPABASE (SI CLÉS MANQUANTES)
-         ========================================================================= -->
-    <div id="modal-config" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
-                    <i class="fa-solid fa-database"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-lg text-white">Connexion Supabase</h3>
-                    <p class="text-xs text-slate-400">Configure ton projet gratuit pour démarrer</p>
-                </div>
-            </div>
-            <p class="text-xs text-slate-300 mb-4 leading-relaxed">
-                Renseigne l'URL et la clé publique (<code>anon key</code>) de ton projet Supabase. Pour tes visiteurs GitHub Pages, pense à les coller directement en haut du fichier <code>index.html</code>.
-            </p>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Supabase Project URL</label>
-                    <input type="text" id="cfg-url" placeholder="https://xyzcompany.supabase.co" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Supabase Anon Public Key</label>
-                    <input type="text" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                </div>
-                <button onclick="saveConfigFromModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition mt-2">
-                    Se connecter à la base
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         MODALE 2 : CONNEXION ADMIN
-         ========================================================================= -->
-    <div id="modal-login" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-sm w-full p-6 shadow-2xl">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg text-white">Espace Administrateur</h3>
-                <button onclick="closeModal('modal-login')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form onsubmit="submitLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Email Admin</label>
-                    <input type="email" id="login-email" required class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Mot de passe</label>
-                    <input type="password" id="login-password" required class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
-                    Déverrouiller l'édition
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         MODALE 3 : GESTION DES CATÉGORIES & SOUS-CATÉGORIES
-         ========================================================================= -->
-    <div id="modal-structure" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-5 pb-3 border-b border-darkborder">
-                <h3 class="font-bold text-lg text-white">Gérer les Catégories & Sous-catégories</h3>
-                <button onclick="closeModal('modal-structure')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Créer une Catégorie -->
-                <div class="bg-darkbg border border-darkborder rounded-xl p-4">
-                    <h4 class="font-semibold text-sm text-indigo-400 mb-3"><i class="fa-solid fa-folder mr-1.5"></i>Nouvelle Catégorie</h4>
-                    <form onsubmit="createCategory(event)" class="space-y-3">
-                        <div class="flex gap-2">
-                            <input type="text" id="new-cat-icon" value="📁" maxlength="4" class="w-14 text-center bg-darkcard border border-darkborder rounded-xl px-2 py-2 text-sm text-white outline-none">
-                            <input type="text" id="new-cat-name" required placeholder="Ex: Géographie, Sport..." class="flex-1 bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition">
-                            Créer la catégorie
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Créer une Sous-catégorie (Collection) -->
-                <div class="bg-darkbg border border-darkborder rounded-xl p-4">
-                    <h4 class="font-semibold text-sm text-emerald-400 mb-3"><i class="fa-solid fa-layer-group mr-1.5"></i>Nouvelle Sous-catégorie</h4>
-                    <form onsubmit="createCollection(event)" class="space-y-3">
-                        <select id="new-col-cat" required class="w-full bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-emerald-500">
-                            <option value="">-- Choisir la catégorie --</option>
-                        </select>
-                        <input type="text" id="new-col-name" required placeholder="Ex: Communes des Vosges" class="w-full bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-emerald-500">
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 rounded-xl transition">
-                            Créer la sous-catégorie
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Liste existante pour suppression -->
-            <div class="mt-6">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Structure actuelle</h4>
-                <div id="structure-admin-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         MODALE 4 : AJOUTER / ÉDITER UNE CARTE MANUELLEMENT
+         MODALE 4 : AJOUTER / ÉDITER UNE CARTE MANUELLEMENT (AVEC AUTO-FILL WIKIPEDIA)
          ========================================================================= -->
     <div id="modal-card" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-darkcard border border-darkborder rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -367,44 +259,34 @@
 
             <form onsubmit="saveCard(event)" class="space-y-4">
                 <input type="hidden" id="edit-card-db-id">
+                <input type="hidden" id="card-uuid">
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">ID Wikimasters de la carte (UUID) *</label>
-                    <input type="text" id="card-uuid" required placeholder="Ex: 550e8400-e29b-41d4-a716-446655440000" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-indigo-500">
-                    <p class="text-[11px] text-slate-500 mt-1">Indispensable pour que l'import JSON reconnaisse automatiquement cette carte.</p>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Nom de l'article Wikipedia *</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="card-title" required placeholder="Ex: Épinal" class="flex-1 bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                        <button type="button" id="btn-wiki-single" onclick="autoFillSingleFromWiki()" class="bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 text-xs font-semibold px-3 py-2 rounded-xl transition shrink-0 flex items-center gap-1.5">
+                            <i class="fa-brands fa-wikipedia-w"></i> Auto-remplir
+                        </button>
+                    </div>
+                    <p id="single-wiki-status" class="text-[11px] text-slate-500 mt-1">Clique sur "Auto-remplir" pour récupérer l'image et calculer la rareté via les vues mensuelles.</p>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3">
-                    <div class="col-span-2">
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Titre de la carte *</label>
-                        <input type="text" id="card-title" required placeholder="Ex: Épinal" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                    </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Rareté *</label>
                         <select id="card-rarity" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                            <option value="C">C (Commune)</option>
-                            <option value="PC">PC (Peu Commune)</option>
-                            <option value="R">R (Rare)</option>
-                            <option value="SR">SR (Super Rare)</option>
-                            <option value="UR">UR (Ultra Rare)</option>
-                            <option value="L">L (Légendaire)</option>
+                            <option value="C">C (&lt; 50 vues)</option>
+                            <option value="PC">PC (50+ vues)</option>
+                            <option value="R">R (250+ vues)</option>
+                            <option value="SR">SR (1 000+ vues)</option>
+                            <option value="UR">UR (5 000+ vues)</option>
+                            <option value="L">L (20 000+ vues)</option>
                         </select>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">URL de l'image (Wikimedia / Wikipedia)</label>
-                    <input type="url" id="card-image" placeholder="https://upload.wikimedia.org/..." class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">ATK</label>
-                        <input type="number" id="card-atk" value="0" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">DEF</label>
-                        <input type="number" id="card-def" value="0" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">URL de l'image (Wikimedia)</label>
+                        <input type="url" id="card-image" placeholder="https://upload.wikimedia.org/..." class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
                     </div>
                 </div>
 
@@ -470,29 +352,26 @@
     </div>
 
     <!-- =========================================================================
-         MODALE 6 : AJOUT EN MASSE / PAR PAQUET (NDJSON OU LISTE)
+         MODALE 6 : AJOUT EN MASSE / PAR PAQUET (RECHERCHE AUTO WIKIPEDIA)
          ========================================================================= -->
     <div id="modal-bulk-cards" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-darkcard border border-darkborder rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-darkborder">
                 <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-layer-group text-indigo-400 text-lg"></i>
-                    <h3 class="font-bold text-lg text-white">Ajouter des cartes par paquet</h3>
+                    <i class="fa-brands fa-wikipedia-w text-indigo-400 text-lg"></i>
+                    <h3 class="font-bold text-lg text-white">Ajouter des cartes par liste de noms</h3>
                 </div>
                 <button onclick="closeModal('modal-bulk-cards')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <div class="bg-darkbg border border-darkborder rounded-xl p-3.5 mb-4 text-xs text-slate-300 space-y-2">
-                <p class="font-semibold text-indigo-400">Deux formats acceptés (1 carte par ligne) :</p>
-                <ul class="list-disc pl-5 space-y-1 text-slate-400">
-                    <li><strong class="text-slate-200">Lignes brutes de <code>cards.ndjson</code> :</strong> Copie-colle directement les lignes JSON extraites de ton fichier (ex: <code>{"id":"...","title":"Épinal","rarity":"R",...}</code>).</li>
-                    <li><strong class="text-slate-200">Format simple séparé par <code>;</code> :</strong> <code>UUID ; Titre ; Rareté ; URL_Image ; ATK ; DEF</code> (seuls l'UUID et le Titre sont obligatoires).</li>
-                </ul>
+            <div class="bg-darkbg border border-darkborder rounded-xl p-3.5 mb-4 text-xs text-slate-300 space-y-1.5">
+                <p class="font-semibold text-indigo-400">Écris simplement le nom de chaque carte (1 par ligne) :</p>
+                <p class="text-slate-400">L'application va interroger automatiquement Wikipedia FR pour récupérer la photo officielle et calculer la rareté exacte selon les vues mensuelles (<span class="text-slate-200">C &lt; 50, PC 50+, R 250+, SR 1k+, UR 5k+, L 20k+</span>).</p>
             </div>
 
             <form onsubmit="saveBulkCards(event)" class="space-y-4">
                 <div>
-                    <textarea id="bulk-cards-input" rows="10" required placeholder='Colle tes lignes ici...&#10;{"id":"550e8400-e29b-41d4-a716-446655440000","title":"Épinal","rarity":"R","atk":450,"def":400}&#10;ou&#10;550e8400-e29b-41d4-a716-446655440001 ; Gérardmer ; SR ; https://... ; 600 ; 550' class="w-full bg-darkbg border border-darkborder focus:border-indigo-500 rounded-xl p-3 text-xs font-mono text-slate-200 placeholder-slate-600 outline-none"></textarea>
+                    <textarea id="bulk-cards-input" rows="9" required placeholder="Épinal&#10;Gérardmer&#10;Saint-Dié-des-Vosges&#10;Vittel" class="w-full bg-darkbg border border-darkborder focus:border-indigo-500 rounded-xl p-3 text-sm text-slate-200 placeholder-slate-600 outline-none"></textarea>
                 </div>
 
                 <div class="flex items-center justify-between flex-wrap gap-3">
@@ -500,17 +379,28 @@
                         <input type="checkbox" id="bulk-default-owned" class="w-4 h-4 rounded accent-emerald-500">
                         <span class="text-xs text-slate-300 font-medium">Marquer toutes ces cartes comme déjà possédées</span>
                     </label>
-                    <span id="bulk-preview-count" class="text-xs text-slate-400 font-medium">0 ligne détectée</span>
+                    <span id="bulk-preview-count" class="text-xs text-slate-400 font-medium">0 carte à rechercher</span>
                 </div>
 
-                <div id="bulk-error-box" class="hidden p-3 rounded-xl bg-rose-950/50 border border-rose-500/40 text-xs text-rose-300"></div>
+                <!-- Barre de progression pendant l'interrogation Wikipedia -->
+                <div id="bulk-progress-wrapper" class="hidden space-y-1.5 bg-darkbg border border-darkborder p-3 rounded-xl">
+                    <div class="flex justify-between text-xs">
+                        <span id="bulk-progress-label" class="text-indigo-400 font-medium">Recherche sur Wikipedia...</span>
+                        <span id="bulk-progress-pct" class="text-slate-300 font-bold">0%</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div id="bulk-progress-bar" class="h-full bg-indigo-500 transition-all duration-200" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="bulk-error-box" class="hidden p-3 rounded-xl bg-rose-950/50 border border-rose-500/40 text-xs text-rose-300 max-h-32 overflow-y-auto"></div>
 
                 <div class="flex gap-3 pt-2">
                     <button type="button" onclick="closeModal('modal-bulk-cards')" class="flex-1 bg-darkbg hover:bg-darkhover border border-darkborder text-slate-300 font-medium py-2.5 rounded-xl transition">
                         Annuler
                     </button>
                     <button type="submit" id="btn-submit-bulk" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
-                        Importer le paquet
+                        Rechercher & Importer
                     </button>
                 </div>
             </form>
@@ -837,8 +727,6 @@
             filtered.sort((a, b) => {
                 if (sortBy === 'title_asc') return a.title.localeCompare(b.title);
                 if (sortBy === 'rarity_desc') return (RARITY_ORDER[b.rarity] || 0) - (RARITY_ORDER[a.rarity] || 0);
-                if (sortBy === 'atk_desc') return (b.atk || 0) - (a.atk || 0);
-                if (sortBy === 'def_desc') return (b.def || 0) - (a.def || 0);
                 if (sortBy === 'owned_first') return (b.is_owned === a.is_owned) ? a.title.localeCompare(b.title) : (b.is_owned ? 1 : -1);
                 return 0;
             });
@@ -911,96 +799,115 @@
                             </div>
 
                             <!-- Stats ATK / DEF -->
-                            <div class="mt-3 pt-2 border-t border-darkborder/80 flex items-center justify-between text-xs font-mono">
-                                <span class="text-rose-400 font-semibold"><i class="fa-solid fa-khanda mr-1 text-[10px]"></i>${card.atk || 0}</span>
-                                <span class="text-sky-400 font-semibold"><i class="fa-solid fa-shield-halved mr-1 text-[10px]"></i>${card.def || 0}</span>
-                            </div>
+                        <!-- Infos bas de carte (Titre uniquement, épuré sans ATK/DEF) -->
+                        <div class="p-3 flex-1 flex flex-col justify-center">
+                            ${!selectedCollectionId && colObj ? `<div class="text-[10px] font-semibold text-indigo-400 truncate mb-0.5">${escapeHtml(colObj.name)}</div>` : ''}
+                            <h3 class="font-bold text-sm text-white leading-snug line-clamp-2" title="${escapeHtml(card.title)}">${escapeHtml(card.title)}</h3>
                         </div>
                     </div>
                 `;
             }).join('');
         }
+        // --- ACTIONS ADMIN : CARTES & RECHERCHE WIKIPEDIA ---
+        function computeRarityFromViews(views) {
+            if (views >= 20000) return 'L';
+            if (views >= 5000)  return 'UR';
+            if (views >= 1000)  return 'SR';
+            if (views >= 250)   return 'R';
+            if (views >= 50)    return 'PC';
+            return 'C';
+        }
 
-        // --- ACTIONS ADMIN : CATÉGORIES & SOUS-CATÉGORIES ---
-        function populateAdminStructureModal() {
-            const select = document.getElementById('new-col-cat');
-            select.innerHTML = '<option value="">-- Choisir la catégorie --</option>' + 
-                categories.map(c => `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
+        // Génère un UUID déterministe à partir du pageId Wikipedia (pour respecter la contrainte UUID de Supabase)
+        function wikiPageIdToUuid(pageId) {
+            const hex = Number(pageId).toString(16).padStart(12, '0').slice(-12);
+            return `00000000-0000-4000-8000-${hex}`;
+        }
 
-            const list = document.getElementById('structure-admin-list');
-            if (categories.length === 0) {
-                list.innerHTML = '<p class="text-xs text-slate-500 italic">Aucune catégorie pour le moment.</p>';
+        async function fetchWikiCardInfo(queryName) {
+            // 1. Récupérer le titre exact, le pageid et l'image principale via l'API Wikipedia FR
+            const summaryUrl = `https://fr.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages|info&piprop=thumbnail&pithumbsize=500&redirects=1&titles=${encodeURIComponent(queryName)}`;
+            const res = await fetch(summaryUrl);
+            if (!res.ok) throw new Error("Erreur réseau Wikipedia");
+            const data = await res.json();
+
+            const pages = data.query?.pages || {};
+            const pageKey = Object.keys(pages)[0];
+            const page = pages[pageKey];
+
+            if (!page || page.missing !== undefined || Number(pageKey) < 0) {
+                throw new Error(`Article introuvable : "${queryName}"`);
+            }
+
+            const exactTitle = page.title;
+            const imageUrl = page.thumbnail?.source || null;
+            const wikiUuid = wikiPageIdToUuid(page.pageid);
+
+            // 2. Récupérer les vues des 30 derniers jours via Wikimedia Pageviews API
+            let monthlyViews = 0;
+            try {
+                const end = new Date();
+                end.setDate(end.getDate() - 1);
+                const start = new Date();
+                start.setDate(start.getDate() - 30);
+
+                const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
+                const encodedArticle = encodeURIComponent(exactTitle.replace(/ /g, '_'));
+                const viewsUrl = `https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/fr.wikipedia/all-access/user/${encodedArticle}/daily/${fmt(start)}/${fmt(end)}`;
+
+                const vRes = await fetch(viewsUrl);
+                if (vRes.ok) {
+                    const vData = await vRes.json();
+                    if (Array.isArray(vData.items)) {
+                        monthlyViews = vData.items.reduce((sum, item) => sum + (item.views || 0), 0);
+                    }
+                }
+            } catch (_) {
+                // Fallback silencieux si les stats de vues sont indisponibles pour un article très récent
+            }
+
+            return {
+                card_id: wikiUuid,
+                title: exactTitle,
+                rarity: computeRarityFromViews(monthlyViews),
+                views: monthlyViews,
+                image_url: imageUrl
+            };
+        }
+
+        async function autoFillSingleFromWiki() {
+            const titleInput = document.getElementById('card-title');
+            const statusEl = document.getElementById('single-wiki-status');
+            const btn = document.getElementById('btn-wiki-single');
+            const query = titleInput.value.trim();
+
+            if (!query) {
+                showToast("Écris d'abord le nom d'un article.", "error");
                 return;
             }
 
-            list.innerHTML = categories.map(cat => {
-                const cols = collections.filter(c => c.category_id === cat.id);
-                return `
-                    <div class="bg-darkbg border border-darkborder rounded-xl p-3">
-                        <div class="flex items-center justify-between font-semibold text-sm text-white mb-2">
-                            <span>${escapeHtml(cat.icon)} ${escapeHtml(cat.name)}</span>
-                            <button onclick="deleteCategory('${cat.id}')" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded hover:bg-rose-500/10" title="Supprimer la catégorie">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                        <div class="space-y-1 pl-4 border-l border-darkborder">
-                            ${cols.map(col => `
-                                <div class="flex items-center justify-between text-xs text-slate-300 py-1">
-                                    <span>${escapeHtml(col.name)}</span>
-                                    <button onclick="deleteCollection('${col.id}')" class="text-slate-500 hover:text-rose-400 px-1.5" title="Supprimer la sous-catégorie">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                </div>
-                            `).join('') || '<span class="text-[11px] text-slate-600">Vide</span>'}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            btn.disabled = true;
+            statusEl.textContent = "Recherche sur Wikipedia en cours...";
+            statusEl.className = "text-[11px] text-indigo-400 mt-1";
+
+            try {
+                const info = await fetchWikiCardInfo(query);
+                titleInput.value = info.title;
+                document.getElementById('card-rarity').value = info.rarity;
+                document.getElementById('card-image').value = info.image_url || '';
+                if (!document.getElementById('card-uuid').value) {
+                    document.getElementById('card-uuid').value = info.card_id;
+                }
+                statusEl.textContent = `Trouvé : "${info.title}" • ${info.views.toLocaleString('fr-FR')} vues/30j → Rareté ${info.rarity}`;
+                statusEl.className = "text-[11px] text-emerald-400 mt-1";
+            } catch (err) {
+                statusEl.textContent = err.message;
+                statusEl.className = "text-[11px] text-rose-400 mt-1";
+            } finally {
+                btn.disabled = false;
+            }
         }
 
-        async function createCategory(e) {
-            e.preventDefault();
-            const icon = document.getElementById('new-cat-icon').value.trim() || '📁';
-            const name = document.getElementById('new-cat-name').value.trim();
-
-            const { error } = await supabaseClient.from('categories').insert([{ name, icon }]);
-            if (error) return showToast("Erreur : " + error.message, "error");
-
-            document.getElementById('new-cat-name').value = '';
-            showToast("Catégorie créée !", "success");
-            await loadAllData();
-        }
-
-        async function deleteCategory(id) {
-            const { error } = await supabaseClient.from('categories').delete().eq('id', id);
-            if (error) return showToast("Erreur : " + error.message, "error");
-            if (selectedCategoryId === id) resetNavigation();
-            showToast("Catégorie supprimée.", "info");
-            await loadAllData();
-        }
-
-        async function createCollection(e) {
-            e.preventDefault();
-            const category_id = document.getElementById('new-col-cat').value;
-            const name = document.getElementById('new-col-name').value.trim();
-
-            const { error } = await supabaseClient.from('collections').insert([{ category_id, name }]);
-            if (error) return showToast("Erreur : " + error.message, "error");
-
-            document.getElementById('new-col-name').value = '';
-            showToast("Sous-catégorie créée !", "success");
-            await loadAllData();
-        }
-
-        async function deleteCollection(id) {
-            const { error } = await supabaseClient.from('collections').delete().eq('id', id);
-            if (error) return showToast("Erreur : " + error.message, "error");
-            if (selectedCollectionId === id) selectedCollectionId = null;
-            showToast("Sous-catégorie supprimée.", "info");
-            await loadAllData();
-        }
-
-        // --- ACTIONS ADMIN : CARTES ---
         function openAddCardModal() {
             document.getElementById('modal-card-title').textContent = "Ajouter une carte";
             document.getElementById('edit-card-db-id').value = "";
@@ -1008,10 +915,10 @@
             document.getElementById('card-title').value = "";
             document.getElementById('card-rarity').value = "C";
             document.getElementById('card-image').value = "";
-            document.getElementById('card-atk').value = "0";
-            document.getElementById('card-def').value = "0";
             document.getElementById('card-owned').checked = false;
             document.getElementById('card-shiny').checked = false;
+            document.getElementById('single-wiki-status').textContent = 'Clique sur "Auto-remplir" pour récupérer l\'image et calculer la rareté via les vues mensuelles.';
+            document.getElementById('single-wiki-status').className = "text-[11px] text-slate-500 mt-1";
             openModal('modal-card');
         }
 
@@ -1025,23 +932,28 @@
             document.getElementById('card-title').value = card.title;
             document.getElementById('card-rarity').value = card.rarity;
             document.getElementById('card-image').value = card.image_url || "";
-            document.getElementById('card-atk').value = card.atk || 0;
-            document.getElementById('card-def').value = card.def || 0;
             document.getElementById('card-owned').checked = !!card.is_owned;
             document.getElementById('card-shiny').checked = !!card.is_shiny;
+            document.getElementById('single-wiki-status').textContent = 'Tu peux cliquer sur "Auto-remplir" pour actualiser l\'image ou la rareté.';
+            document.getElementById('single-wiki-status').className = "text-[11px] text-slate-500 mt-1";
             openModal('modal-card');
         }
 
         async function saveCard(e) {
             e.preventDefault();
             const dbId = document.getElementById('edit-card-db-id').value;
+            const title = document.getElementById('card-title').value.trim();
+            let uuid = document.getElementById('card-uuid').value.trim();
+
+            if (!uuid) {
+                uuid = crypto.randomUUID ? crypto.randomUUID() : wikiPageIdToUuid(Date.now());
+            }
+
             const payload = {
-                card_id: document.getElementById('card-uuid').value.trim(),
-                title: document.getElementById('card-title').value.trim(),
+                card_id: uuid,
+                title: title,
                 rarity: document.getElementById('card-rarity').value,
                 image_url: document.getElementById('card-image').value.trim() || null,
-                atk: parseInt(document.getElementById('card-atk').value) || 0,
-                def: parseInt(document.getElementById('card-def').value) || 0,
                 is_owned: document.getElementById('card-owned').checked,
                 is_shiny: document.getElementById('card-shiny').checked,
             };
@@ -1086,11 +998,20 @@
             document.getElementById('bulk-error-box').classList.add('hidden');
             openModal('modal-bulk-cards');
         }
+        // --- AJOUT EN MASSE / PAR LISTE DE NOMS (WIKIPEDIA AUTO) ---
+        function openBulkAddModal() {
+            document.getElementById('bulk-cards-input').value = '';
+            document.getElementById('bulk-default-owned').checked = false;
+            document.getElementById('bulk-preview-count').textContent = '0 carte à rechercher';
+            document.getElementById('bulk-error-box').classList.add('hidden');
+            document.getElementById('bulk-progress-wrapper').classList.add('hidden');
+            openModal('modal-bulk-cards');
+        }
 
         document.addEventListener('input', (e) => {
             if (e.target && e.target.id === 'bulk-cards-input') {
                 const lines = e.target.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                document.getElementById('bulk-preview-count').textContent = `${lines.length} ligne${lines.length > 1 ? 's' : ''} détectée${lines.length > 1 ? 's' : ''}`;
+                document.getElementById('bulk-preview-count').textContent = `${lines.length} carte${lines.length > 1 ? 's' : ''} à rechercher`;
             }
         });
 
@@ -1102,109 +1023,91 @@
             const defaultOwned = document.getElementById('bulk-default-owned').checked;
             const errorBox = document.getElementById('bulk-error-box');
             const submitBtn = document.getElementById('btn-submit-bulk');
+            const progressWrapper = document.getElementById('bulk-progress-wrapper');
+            const progressLabel = document.getElementById('bulk-progress-label');
+            const progressPct = document.getElementById('bulk-progress-pct');
+            const progressBar = document.getElementById('bulk-progress-bar');
 
             errorBox.classList.add('hidden');
-            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            if (lines.length === 0) return;
+            const names = [...new Set(rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0))];
+            if (names.length === 0) return;
 
-            const parsedCards = [];
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche Wikipedia...';
+            progressWrapper.classList.remove('hidden');
+
+            const fetchedCards = [];
             const errors = [];
-            const validRarities = ['C', 'PC', 'R', 'SR', 'UR', 'L'];
 
-            lines.forEach((line, idx) => {
-                try {
-                    // Cas 1 : Ligne JSON (issue de cards.ndjson)
-                    if (line.startsWith('{')) {
-                        // Nettoyer une éventuelle virgule en fin de ligne
-                        const cleanLine = line.endsWith(',') ? line.slice(0, -1) : line;
-                        const obj = JSON.parse(cleanLine);
-                        const uuid = (obj.id || obj.card_id || '').trim();
-                        const title = (obj.title || obj.name || '').trim();
-                        if (!uuid || !title) throw new Error("Champs 'id' ou 'title' manquants");
-
-                        const rawRarity = String(obj.rarity || 'C').toUpperCase();
-                        parsedCards.push({
+            // Traitement par petits lots de 5 requêtes simultanées pour rester rapide sans saturer Wikipedia
+            const BATCH_SIZE = 5;
+            for (let i = 0; i < names.length; i += BATCH_SIZE) {
+                const batch = names.slice(i, i + BATCH_SIZE);
+                await Promise.all(batch.map(async (name) => {
+                    try {
+                        const info = await fetchWikiCardInfo(name);
+                        fetchedCards.push({
                             collection_id: selectedCollectionId,
-                            card_id: uuid,
-                            title: title,
-                            rarity: validRarities.includes(rawRarity) ? rawRarity : 'C',
-                            image_url: obj.image_url || obj.image || obj.thumbnail || null,
-                            atk: parseInt(obj.atk) || 0,
-                            def: parseInt(obj.def) || 0,
-                            is_owned: defaultOwned,
-                            is_shiny: !!obj.shiny
-                        });
-                    } else {
-                        // Cas 2 : Format CSV/Point-virgule (UUID ; Titre ; Rareté ; Image ; ATK ; DEF)
-                        const parts = line.split(';').map(p => p.trim());
-                        if (parts.length < 2 || !parts[0] || !parts[1]) {
-                            throw new Error("Format invalide (attendu: UUID ; Titre)");
-                        }
-                        const rawRarity = (parts[2] || 'C').toUpperCase();
-                        parsedCards.push({
-                            collection_id: selectedCollectionId,
-                            card_id: parts[0],
-                            title: parts[1],
-                            rarity: validRarities.includes(rawRarity) ? rawRarity : 'C',
-                            image_url: parts[3] || null,
-                            atk: parseInt(parts[4]) || 0,
-                            def: parseInt(parts[5]) || 0,
+                            card_id: info.card_id,
+                            title: info.title,
+                            rarity: info.rarity,
+                            image_url: info.image_url,
                             is_owned: defaultOwned,
                             is_shiny: false
                         });
+                    } catch (err) {
+                        errors.push(err.message);
                     }
-                } catch (err) {
-                    errors.push(`Ligne ${idx + 1} : ${err.message}`);
-                }
-            });
+                }));
 
-            if (errors.length > 0) {
-                errorBox.innerHTML = `<strong>Erreurs détectées (${errors.length}) :</strong><br>` + errors.slice(0, 5).map(escapeHtml).join('<br>');
-                errorBox.classList.remove('hidden');
-                return;
+                const done = Math.min(i + BATCH_SIZE, names.length);
+                const pct = Math.round((done / names.length) * 100);
+                progressLabel.textContent = `Analyse Wikipedia : ${done} / ${names.length}`;
+                progressPct.textContent = `${pct}%`;
+                progressBar.style.width = `${pct}%`;
             }
 
-            // Dédupliquer au sein du paquet lui-même et ignorer celles déjà dans la collection
+            if (errors.length > 0) {
+                errorBox.innerHTML = `<strong>Articles non trouvés (${errors.length}) :</strong><br>` + errors.map(escapeHtml).join('<br>');
+                errorBox.classList.remove('hidden');
+            }
+
+            // Dédupliquer par rapport aux cartes déjà dans la collection
             const existingUuids = new Set(cards.filter(c => c.collection_id === selectedCollectionId).map(c => c.card_id));
+            const existingTitles = new Set(cards.filter(c => c.collection_id === selectedCollectionId).map(c => c.title.toLowerCase()));
             const uniqueNewCards = [];
             const seenInBatch = new Set();
 
-            for (const c of parsedCards) {
-                if (!existingUuids.has(c.card_id) && !seenInBatch.has(c.card_id)) {
+            for (const c of fetchedCards) {
+                const normTitle = c.title.toLowerCase();
+                if (!existingUuids.has(c.card_id) && !existingTitles.has(normTitle) && !seenInBatch.has(c.card_id)) {
                     seenInBatch.add(c.card_id);
                     uniqueNewCards.push(c);
                 }
             }
 
-            if (uniqueNewCards.length === 0) {
-                showToast("Toutes ces cartes sont déjà présentes dans cette collection !", "info");
-                closeModal('modal-bulk-cards');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Import en cours...';
-
             try {
-                // Envoi par lots de 200 pour éviter toute limite de requête
-                const CHUNK_SIZE = 200;
-                for (let i = 0; i < uniqueNewCards.length; i += CHUNK_SIZE) {
-                    const chunk = uniqueNewCards.slice(i, i + CHUNK_SIZE);
-                    const { error } = await supabaseClient.from('collection_cards').insert(chunk);
-                    if (error) throw error;
+                if (uniqueNewCards.length > 0) {
+                    const CHUNK_SIZE = 200;
+                    for (let i = 0; i < uniqueNewCards.length; i += CHUNK_SIZE) {
+                        const chunk = uniqueNewCards.slice(i, i + CHUNK_SIZE);
+                        const { error } = await supabaseClient.from('collection_cards').insert(chunk);
+                        if (error) throw error;
+                    }
+                    await loadAllData();
                 }
 
-                closeModal('modal-bulk-cards');
-                const skipped = parsedCards.length - uniqueNewCards.length;
-                showToast(`${uniqueNewCards.length} carte(s) importée(s) !` + (skipped > 0 ? ` (${skipped} doublon(s) ignoré(s))` : ''), "success");
-                await loadAllData();
+                if (errors.length === 0) {
+                    closeModal('modal-bulk-cards');
+                }
+                showToast(`${uniqueNewCards.length} carte(s) ajoutée(s) automatiquement !`, uniqueNewCards.length > 0 ? "success" : "info");
             } catch (err) {
                 console.error(err);
                 errorBox.textContent = "Erreur Supabase : " + err.message;
                 errorBox.classList.remove('hidden');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = "Importer le paquet";
+                submitBtn.textContent = "Rechercher & Importer";
             }
         }
 
@@ -1225,13 +1128,19 @@
                     throw new Error("Format invalide : le tableau 'copies' est introuvable dans ce fichier JSON.");
                 }
 
-                // Indexer les copies possédées par card_id (en privilégiant la version shiny ou la plus haute ATK si doublons)
-                const ownedMap = new Map();
+                // Indexer les copies possédées par card_id ET par titre normalisé (pour matcher les cartes ajoutées via Wikipedia)
+                const ownedById = new Map();
+                const ownedByTitle = new Map();
+
                 for (const copy of json.copies) {
-                    if (!copy.card_id) continue;
-                    const existing = ownedMap.get(copy.card_id);
-                    if (!existing || (!existing.shiny && copy.shiny) || (copy.atk > existing.atk)) {
-                        ownedMap.set(copy.card_id, copy);
+                    if (copy.card_id) {
+                        const ex = ownedById.get(copy.card_id);
+                        if (!ex || (!ex.shiny && copy.shiny)) ownedById.set(copy.card_id, copy);
+                    }
+                    const copyTitle = (copy.title || copy.name || '').trim().toLowerCase();
+                    if (copyTitle) {
+                        const exT = ownedByTitle.get(copyTitle);
+                        if (!exT || (!exT.shiny && copy.shiny)) ownedByTitle.set(copyTitle, copy);
                     }
                 }
 
@@ -1241,23 +1150,26 @@
                 const updates = [];
 
                 for (const dbCard of cards) {
-                    const match = ownedMap.get(dbCard.card_id);
+                    const match = ownedById.get(dbCard.card_id) || ownedByTitle.get(dbCard.title.trim().toLowerCase());
                     if (match) {
                         const wasMissing = !dbCard.is_owned;
-                        const needsStatUpdate = (match.shiny && !dbCard.is_shiny) || (match.atk && match.atk !== dbCard.atk) || (match.def && match.def !== dbCard.def);
+                        const needsShinyUpdate = match.shiny && !dbCard.is_shiny;
+                        const needsUuidSync = match.card_id && match.card_id !== dbCard.card_id;
 
-                        if (wasMissing || needsStatUpdate) {
+                        if (wasMissing || needsShinyUpdate || needsUuidSync) {
                             if (wasMissing) newlyUnlocked++;
-                            else updatedStats++;
+                            else if (needsShinyUpdate) updatedStats++;
+
+                            const patch = {
+                                is_owned: true,
+                                is_shiny: dbCard.is_shiny || !!match.shiny,
+                                obtained_at: match.obtained_at || dbCard.obtained_at
+                            };
+                            if (needsUuidSync) patch.card_id = match.card_id;
+                            if (match.rarity) patch.rarity = match.rarity;
 
                             updates.push(
-                                supabaseClient.from('collection_cards').update({
-                                    is_owned: true,
-                                    is_shiny: dbCard.is_shiny || !!match.shiny,
-                                    atk: match.atk ?? dbCard.atk,
-                                    def: match.def ?? dbCard.def,
-                                    obtained_at: match.obtained_at || dbCard.obtained_at
-                                }).eq('id', dbCard.id)
+                                supabaseClient.from('collection_cards').update(patch).eq('id', dbCard.id)
                             );
                         }
                     }
@@ -1272,7 +1184,7 @@
                     <div class="font-bold text-emerald-400 text-sm mb-1"><i class="fa-solid fa-circle-check mr-1.5"></i>Synchronisation terminée !</div>
                     <div class="text-slate-300">• Cartes analysées dans ton JSON : <strong>${json.copies.length}</strong></div>
                     <div class="text-emerald-300">• Nouvelles cartes débloquées dans tes collections : <strong>+${newlyUnlocked}</strong></div>
-                    <div class="text-slate-400">• Cartes déjà possédées mises à jour (stats/shiny) : <strong>${updatedStats}</strong></div>
+                    <div class="text-slate-400">• Cartes déjà possédées mises à jour (shiny/rareté) : <strong>${updatedStats}</strong></div>
                 `;
                 showToast(`Synchro réussie : +${newlyUnlocked} nouvelles cartes !`, "success");
             } catch (err) {
