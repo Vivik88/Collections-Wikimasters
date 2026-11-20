@@ -457,33 +457,48 @@
          MODALE 5 : SYNCHRONISATION AVEC MA-VITRINE-WIKIMASTERS.JSON
          ========================================================================= -->
     <div id="modal-sync" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between mb-4 pb-3 border-b border-darkborder">
                 <div class="flex items-center gap-2.5">
                     <i class="fa-solid fa-rotate text-emerald-400 text-lg"></i>
-                    <h3 class="font-bold text-lg text-white">Synchroniser ma Vitrine JSON</h3>
+                    <h3 class="font-bold text-lg text-white">Synchroniser ma Vitrine</h3>
                 </div>
                 <button onclick="closeModal('modal-sync')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <p class="text-xs text-slate-300 leading-relaxed mb-4">
-                Sélectionne ton fichier <code>ma-vitrine-wikimasters.json</code>. L'application va comparer les <code>card_id</code> présents dans ton inventaire avec toutes les cartes enregistrées dans tes collections :
-            </p>
-            <ul class="text-xs text-slate-400 space-y-1.5 mb-5 list-disc pl-5">
-                <li>Toutes les cartes manquantes que tu as obtenues passeront automatiquement en <strong class="text-emerald-400">Possédée</strong>.</li>
-                <li>Les statistiques réelles (<code>ATK</code>, <code>DEF</code>, statut <code>Shiny ✨</code>, date d'obtention) seront mises à jour.</li>
-                <li>Aucune nouvelle collection ni tag ne sera importé : ta structure reste propre.</li>
-            </ul>
+            <!-- ÉTAPE 1 : SYNCHRO HABITUELLE AVEC MA-VITRINE-WIKIMASTERS.JSON -->
+            <div class="mb-5">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">1. Mettre à jour mes cartes possédées</h4>
+                <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                    Sélectionne ton export <code>ma-vitrine-wikimasters.json</code> pour cocher automatiquement toutes les cartes que tu viens d'obtenir.
+                </p>
 
-            <div class="border-2 border-dashed border-darkborder hover:border-emerald-500/60 rounded-2xl p-6 text-center transition bg-darkbg/50">
-                <input type="file" id="json-file-input" accept=".json" onchange="handleJsonSync(event)" class="hidden">
-                <label for="json-file-input" class="cursor-pointer flex flex-col items-center gap-2">
-                    <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-file-arrow-up"></i>
-                    </div>
-                    <span class="text-sm font-semibold text-white">Clique pour choisir ma-vitrine-wikimasters.json</span>
-                    <span class="text-xs text-slate-500">Traitement instantané dans ton navigateur</span>
-                </label>
+                <div class="border-2 border-dashed border-darkborder hover:border-emerald-500/60 rounded-2xl p-5 text-center transition bg-darkbg/50">
+                    <input type="file" id="json-file-input" accept=".json" onchange="handleJsonSync(event)" class="hidden">
+                    <label for="json-file-input" class="cursor-pointer flex flex-col items-center gap-1.5">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                        </div>
+                        <span class="text-sm font-semibold text-white">Choisir ma-vitrine-wikimasters.json</span>
+                        <span class="text-[11px] text-slate-500">Synchronisation instantanée</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- ÉTAPE 2 : LIAISON DES UUID VIA CARDS.NDJSON (À FAIRE QUAND ON AJOUTE PAR NOM WIKIPEDIA) -->
+            <div class="pt-4 border-t border-darkborder">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">2. Associer les IDs via cards.ndjson (1 fois après ajout par nom)</h4>
+                <p class="text-xs text-slate-400 leading-relaxed mb-3">
+                    Si tu as ajouté des cartes par simple nom Wikipedia, sélectionne ton gros fichier <code>cards.ndjson</code> : ton navigateur va lire les vrais UUID Wikimasters (sans rien uploader) et les associer à tes cartes.
+                </p>
+
+                <div class="border border-dashed border-darkborder hover:border-indigo-500/60 rounded-xl p-4 text-center transition bg-darkbg/50">
+                    <input type="file" id="ndjson-file-input" accept=".ndjson,.json,.txt" onchange="handleNdjsonLink(event)" class="hidden">
+                    <label for="ndjson-file-input" class="cursor-pointer flex items-center justify-center gap-2.5">
+                        <i class="fa-solid fa-link text-indigo-400"></i>
+                        <span class="text-xs font-semibold text-slate-200">Lier les UUIDs avec cards.ndjson (local)</span>
+                    </label>
+                </div>
             </div>
 
             <!-- Zone de résultat de synchro -->
@@ -1444,7 +1459,7 @@
                     throw new Error("Format invalide : le tableau 'copies' est introuvable dans ce fichier JSON.");
                 }
 
-                // Indexer les copies possédées par card_id ET par titre normalisé (pour matcher les cartes ajoutées via Wikipedia)
+                // Indexer les copies possédées par card_id ET par titre normalisé
                 const ownedById = new Map();
                 const ownedByTitle = new Map();
 
@@ -1463,9 +1478,13 @@
                 // Comparer avec les cartes enregistrées dans Supabase
                 let newlyUnlocked = 0;
                 let updatedStats = 0;
+                let unlinkedWikiCount = 0;
                 const updates = [];
 
                 for (const dbCard of cards) {
+                    if (dbCard.card_id && dbCard.card_id.startsWith('00000000-0000-4000-8000-')) {
+                        unlinkedWikiCount++;
+                    }
                     const match = ownedById.get(dbCard.card_id) || ownedByTitle.get(dbCard.title.trim().toLowerCase());
                     if (match) {
                         const wasMissing = !dbCard.is_owned;
@@ -1496,13 +1515,134 @@
                     await loadAllData();
                 }
 
+                const warningHtml = unlinkedWikiCount > 0
+                    ? `<div class="mt-2 pt-2 border-t border-darkborder text-amber-300"><i class="fa-solid fa-circle-info mr-1"></i><strong>${unlinkedWikiCount} carte(s)</strong> ont encore un ID Wikipedia provisoire. Utilise l'étape 2 avec ton fichier <code>cards.ndjson</code> pour les relier !</div>`
+                    : '';
+
                 resultBox.innerHTML = `
                     <div class="font-bold text-emerald-400 text-sm mb-1"><i class="fa-solid fa-circle-check mr-1.5"></i>Synchronisation terminée !</div>
                     <div class="text-slate-300">• Cartes analysées dans ton JSON : <strong>${json.copies.length}</strong></div>
                     <div class="text-emerald-300">• Nouvelles cartes débloquées dans tes collections : <strong>+${newlyUnlocked}</strong></div>
-                    <div class="text-slate-400">• Cartes déjà possédées mises à jour (shiny/rareté) : <strong>${updatedStats}</strong></div>
+                    <div class="text-slate-400">• Cartes déjà possédées mises à jour : <strong>${updatedStats}</strong></div>
+                    ${warningHtml}
                 `;
                 showToast(`Synchro réussie : +${newlyUnlocked} nouvelles cartes !`, "success");
+            } catch (err) {
+                console.error(err);
+                resultBox.innerHTML = `<div class="text-rose-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Erreur : ${escapeHtml(err.message)}</div>`;
+            } finally {
+                event.target.value = '';
+            }
+        }
+
+        // --- LECTURE EN STREAMING DE CARDS.NDJSON (1.25 GO) POUR RELIER LES UUIDS ---
+        async function handleNdjsonLink(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const resultBox = document.getElementById('sync-result-box');
+            resultBox.classList.remove('hidden');
+
+            // Indexer toutes les cartes de Supabase par titre normalisé
+            const cardsByTitle = new Map();
+            for (const c of cards) {
+                const key = c.title.trim().toLowerCase();
+                if (!cardsByTitle.has(key)) cardsByTitle.set(key, []);
+                cardsByTitle.get(key).push(c);
+            }
+
+            if (cardsByTitle.size === 0) {
+                resultBox.innerHTML = '<div class="text-amber-400">Aucune carte dans tes collections pour le moment.</div>';
+                event.target.value = '';
+                return;
+            }
+
+            const totalBytes = file.size;
+            let bytesRead = 0;
+            let leftover = '';
+            const matchedPatches = [];
+            const matchedTitles = new Set();
+
+            try {
+                const reader = file.stream().getReader();
+                const decoder = new TextDecoder('utf-8');
+                let lastUiUpdate = 0;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    bytesRead += value.byteLength;
+                    const chunkText = leftover + decoder.decode(value, { stream: true });
+                    const lines = chunkText.split('\n');
+                    leftover = lines.pop();
+
+                    for (const line of lines) {
+                        if (!line) continue;
+                        // Pré-filtrage ultra rapide avant JSON.parse
+                        const lowerLine = line.toLowerCase();
+                        for (const [titleKey, dbCards] of cardsByTitle.entries()) {
+                            if (!matchedTitles.has(titleKey) && lowerLine.includes(titleKey)) {
+                                try {
+                                    const obj = JSON.parse(line);
+                                    const objTitle = (obj.title || obj.name || '').trim().toLowerCase();
+                                    const realUuid = obj.id || obj.card_id;
+                                    if (objTitle === titleKey && realUuid) {
+                                        matchedTitles.add(titleKey);
+                                        for (const dbCard of dbCards) {
+                                            if (dbCard.card_id !== realUuid || (!dbCard.image_url && obj.image_url)) {
+                                                matchedPatches.push({
+                                                    id: dbCard.id,
+                                                    card_id: realUuid,
+                                                    rarity: obj.rarity || dbCard.rarity,
+                                                    image_url: dbCard.image_url || obj.image_url || null
+                                                });
+                                            }
+                                        }
+                                    }
+                                } catch (_) {}
+                            }
+                        }
+                    }
+
+                    // Si on a déjà trouvé toutes nos cartes, on peut arrêter la lecture immédiatement !
+                    if (matchedTitles.size === cardsByTitle.size) {
+                        await reader.cancel();
+                        break;
+                    }
+
+                    const now = Date.now();
+                    if (now - lastUiUpdate > 250) {
+                        lastUiUpdate = now;
+                        const pct = Math.min(99, Math.round((bytesRead / totalBytes) * 100));
+                        resultBox.innerHTML = `<div class="text-indigo-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Lecture locale de cards.ndjson : <strong>${pct}%</strong> (${matchedTitles.size}/${cardsByTitle.size} cartes trouvées)...</div>`;
+                    }
+                }
+
+                // Appliquer les mises à jour d'UUID dans Supabase
+                if (matchedPatches.length > 0) {
+                    resultBox.innerHTML = `<div class="text-indigo-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Enregistrement de ${matchedPatches.length} UUIDs dans Supabase...</div>`;
+                    const BATCH = 50;
+                    for (let i = 0; i < matchedPatches.length; i += BATCH) {
+                        const slice = matchedPatches.slice(i, i + BATCH);
+                        await Promise.all(slice.map(p =>
+                            supabaseClient.from('collection_cards').update({
+                                card_id: p.card_id,
+                                rarity: p.rarity,
+                                image_url: p.image_url
+                            }).eq('id', p.id)
+                        ));
+                    }
+                    await loadAllData();
+                }
+
+                resultBox.innerHTML = `
+                    <div class="font-bold text-indigo-400 text-sm mb-1"><i class="fa-solid fa-link mr-1.5"></i>Liaison terminée !</div>
+                    <div class="text-slate-300">• Cartes reconnues dans <code>cards.ndjson</code> : <strong>${matchedTitles.size} / ${cardsByTitle.size}</strong></div>
+                    <div class="text-emerald-300">• UUIDs mis à jour dans ta base : <strong>${matchedPatches.length}</strong></div>
+                    <div class="text-slate-400 mt-1">Tu peux maintenant cliquer sur <strong>Choisir ma-vitrine-wikimasters.json</strong> juste au-dessus pour cocher tes cartes !</div>
+                `;
+                showToast(`${matchedPatches.length} UUID(s) associés !`, "success");
             } catch (err) {
                 console.error(err);
                 resultBox.innerHTML = `<div class="text-rose-400 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Erreur : ${escapeHtml(err.message)}</div>`;
