@@ -33,10 +33,66 @@
     </script>
 
     <style>
+        :root {
+            --bg-main: #0b0e14;
+            --bg-card: #131822;
+            --bg-hover: #1a2130;
+            --border-main: #1f2736;
+            --ring-track: #1f2736;
+            --text-main: #e2e8f0;
+        }
+        html:not(.dark) {
+            --bg-main: #f3f5f8;
+            --bg-card: #ffffff;
+            --bg-hover: #eef2f6;
+            --border-main: #dce2ec;
+            --ring-track: #e2e8f0;
+            --text-main: #0f172a;
+        }
+
         body {
-            background-color: #0b0e14;
-            color: #e2e8f0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
             font-family: 'Inter', sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Adaptation dynamique des classes darkbg / darkcard / darkborder en mode clair */
+        html:not(.dark) .bg-darkbg,
+        html:not(.dark) .bg-darkbg\/90,
+        html:not(.dark) .bg-darkbg\/50 { background-color: var(--bg-main) !important; }
+        html:not(.dark) .bg-darkcard { background-color: var(--bg-card) !important; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05); }
+        html:not(.dark) .hover\:bg-darkhover:hover { background-color: var(--bg-hover) !important; }
+        html:not(.dark) .border-darkborder { border-color: var(--border-main) !important; }
+        html:not(.dark) .text-white { color: #0f172a !important; }
+        html:not(.dark) .text-slate-200 { color: #1e293b !important; }
+        html:not(.dark) .text-slate-300 { color: #334155 !important; }
+        html:not(.dark) .text-slate-400 { color: #64748b !important; }
+        html:not(.dark) .bg-slate-800 { background-color: #e2e8f0 !important; }
+        /* Préserver le texte blanc sur les boutons colorés */
+        html:not(.dark) .bg-indigo-600,
+        html:not(.dark) .bg-emerald-600,
+        html:not(.dark) .bg-emerald-500,
+        html:not(.dark) .bg-rose-600 { color: #ffffff !important; }
+        html:not(.dark) .bg-indigo-600 *,
+        html:not(.dark) .bg-emerald-600 *,
+        html:not(.dark) .bg-emerald-500 *,
+        html:not(.dark) .bg-rose-600 * { color: #ffffff !important; }
+
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-main);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
 
         /* Scrollbar personnalisée */
@@ -138,6 +194,11 @@
 
             <!-- Actions Droite (Admin / Synchro / Config) -->
             <div class="flex items-center gap-2">
+                <!-- Bouton Switch Thème Clair / Sombre -->
+                <button id="btn-theme-toggle" onclick="toggleTheme()" title="Changer de thème (Clair / Sombre)" class="flex items-center justify-center w-9 h-9 bg-darkcard hover:bg-darkhover border border-darkborder text-slate-300 rounded-xl transition">
+                    <i id="theme-icon" class="fa-solid fa-sun text-amber-400"></i>
+                </button>
+
                 <!-- Bouton Synchro JSON (Visible uniquement si Admin connecté) -->
                 <button id="btn-sync-json" onclick="openModal('modal-sync')" class="hidden items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-medium px-3 py-2 rounded-xl transition shadow-lg shadow-emerald-600/20">
                     <i class="fa-solid fa-rotate"></i>
@@ -588,6 +649,8 @@
 
         // --- INITIALISATION AU CHARGEMENT ---
         window.addEventListener('DOMContentLoaded', async () => {
+            initTheme();
+
             const url = DEFAULT_SUPABASE_URL || sessionStorage.getItem('wm_sb_url');
             const key = DEFAULT_SUPABASE_ANON_KEY || sessionStorage.getItem('wm_sb_key');
 
@@ -598,6 +661,31 @@
 
             initSupabase(url, key);
         });
+
+        // --- GESTION DU THÈME (SOMBRE / CLAIR) ---
+        function initTheme() {
+            const savedTheme = localStorage.getItem('wm_theme') || 'dark';
+            applyTheme(savedTheme);
+        }
+
+        function toggleTheme() {
+            const isCurrentlyDark = document.documentElement.classList.contains('dark');
+            const nextTheme = isCurrentlyDark ? 'light' : 'dark';
+            localStorage.setItem('wm_theme', nextTheme);
+            applyTheme(nextTheme);
+        }
+
+        function applyTheme(theme) {
+            const htmlEl = document.documentElement;
+            const iconEl = document.getElementById('theme-icon');
+            if (theme === 'light') {
+                htmlEl.classList.remove('dark');
+                if (iconEl) iconEl.className = 'fa-solid fa-moon text-indigo-500';
+            } else {
+                htmlEl.classList.add('dark');
+                if (iconEl) iconEl.className = 'fa-solid fa-sun text-amber-400';
+            }
+        }
 
         function saveConfigFromModal() {
             const url = document.getElementById('cfg-url').value.trim();
@@ -767,18 +855,18 @@
                 });
 
                 const isSelected = selectedCategoryId === cat.id;
-                const radius = 20;
+                const radius = 21;
                 const circumference = 2 * Math.PI * radius;
                 const dashOffset = circumference - (pct / 100) * circumference;
                 const strokeColor = isCompleted ? '#10b981' : (pct >= 50 ? '#facc15' : '#6366f1');
 
                 return `
-                    <button onclick="selectCategory('${cat.id}')" class="text-left bg-darkbg hover:bg-darkhover border ${isSelected ? 'border-amber-400 ring-1 ring-amber-400/50 bg-darkhover' : 'border-darkborder'} rounded-2xl p-4 flex items-center gap-4 transition group">
-                        <!-- Cercle de progression -->
-                        <div class="relative w-13 h-13 shrink-0 flex items-center justify-center">
-                            <svg class="w-13 h-13 -rotate-90" viewBox="0 0 48 48">
-                                <circle cx="24" cy="24" r="${radius}" fill="none" stroke="#1f2736" stroke-width="4"></circle>
-                                <circle cx="24" cy="24" r="${radius}" fill="none" stroke="${strokeColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"></circle>
+                    <button onclick="selectCategory('${cat.id}')" class="text-left bg-darkbg hover:bg-darkhover border ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/40 bg-darkhover' : 'border-darkborder'} rounded-2xl p-4 flex items-center gap-4 transition group">
+                        <!-- Cercle de progression (taille fixe 54x54px pour un rendu toujours net) -->
+                        <div class="relative w-14 h-14 shrink-0 flex items-center justify-center">
+                            <svg class="w-14 h-14 -rotate-90" width="56" height="56" viewBox="0 0 52 52">
+                                <circle cx="26" cy="26" r="${radius}" fill="none" stroke="var(--ring-track)" stroke-width="5"></circle>
+                                <circle cx="26" cy="26" r="${radius}" fill="none" stroke="${strokeColor}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"></circle>
                             </svg>
                             <span class="absolute text-xs font-extrabold ${isCompleted ? 'text-emerald-400' : 'text-white'}">
                                 ${isCompleted ? '<i class="fa-solid fa-check"></i>' : pct + '%'}
