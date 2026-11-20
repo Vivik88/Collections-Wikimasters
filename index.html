@@ -1355,15 +1355,15 @@
                     if (line.startsWith('{')) {
                         try {
                             const obj = JSON.parse(line);
-                            const title = obj.title || obj.name;
+                            const title = obj.t || obj.title || obj.name;
                             const uuid = obj.id || obj.card_id;
                             if (!title || !uuid) throw new Error("Ligne JSON incomplète");
                             fetchedCards.push({
                                 collection_id: selectedCollectionId,
                                 card_id: uuid,
                                 title: title,
-                                rarity: obj.rarity || 'C',
-                                image_url: obj.image_url || obj.image || null,
+                                rarity: obj.r || obj.rarity || 'C',
+                                image_url: obj.i || obj.image_url || obj.image || null,
                                 is_owned: defaultOwned,
                                 is_shiny: false
                             });
@@ -1595,18 +1595,20 @@
 
                         try {
                             const obj = JSON.parse(line);
-                            const rawTitle = obj.title || obj.name || obj.label || obj.article || obj.wiki_title || '';
+                            const rawTitle = obj.t || obj.title || obj.name || obj.label || obj.article || obj.wiki_title || '';
                             const objTitle = String(rawTitle).replace(/_/g, ' ').trim().toLowerCase();
                             const realUuid = obj.id || obj.card_id || obj.uuid;
+                            const realImage = obj.i || obj.image_url || obj.image || null;
+                            const realRarity = obj.r || obj.rarity;
                             if (objTitle && realUuid && cardsByTitle.has(objTitle) && !matchedTitles.has(objTitle)) {
                                 matchedTitles.add(objTitle);
                                 for (const dbCard of cardsByTitle.get(objTitle)) {
-                                    if (dbCard.card_id !== realUuid || (!dbCard.image_url && obj.image_url)) {
+                                    if (dbCard.card_id !== realUuid || (!dbCard.image_url && realImage)) {
                                         matchedPatches.push({
                                             id: dbCard.id,
                                             card_id: realUuid,
-                                            rarity: obj.rarity || dbCard.rarity,
-                                            image_url: dbCard.image_url || obj.image_url || obj.image || null
+                                            rarity: realRarity || dbCard.rarity,
+                                            image_url: dbCard.image_url || realImage || null
                                         });
                                     }
                                 }
