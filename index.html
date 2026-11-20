@@ -248,6 +248,108 @@
     </main>
 
     <!-- =========================================================================
+         MODALE 1 : CONFIGURATION SUPABASE (SI NON CONFIGURÉ EN DUR)
+         ========================================================================= -->
+    <div id="modal-config" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white">Connexion Supabase</h3>
+                    <p class="text-xs text-slate-400">Renseigne tes identifiants de projet</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Project URL</label>
+                    <input type="url" id="cfg-url" placeholder="https://xxxxx.supabase.co" class="w-full bg-darkbg border border-darkborder rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Publishable / Anon Key</label>
+                    <input type="text" id="cfg-key" placeholder="sb_publishable_..." class="w-full bg-darkbg border border-darkborder rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <button onclick="saveConfigFromModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
+                    Enregistrer & Connecter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODALE 2 : CONNEXION ADMIN
+         ========================================================================= -->
+    <div id="modal-login" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg text-white">Connexion Admin</h3>
+                <button onclick="closeModal('modal-login')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="submitLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Email</label>
+                    <input type="email" id="login-email" required class="w-full bg-darkbg border border-darkborder rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Mot de passe</label>
+                    <input type="password" id="login-password" required class="w-full bg-darkbg border border-darkborder rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
+                    Se connecter
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODALE 3 : GESTION DES CATÉGORIES & SOUS-CATÉGORIES
+         ========================================================================= -->
+    <div id="modal-structure" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-5 pb-3 border-b border-darkborder">
+                <h3 class="font-bold text-lg text-white">Gérer les Catégories & Sous-catégories</h3>
+                <button onclick="closeModal('modal-structure')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Créer une Catégorie -->
+                <div class="bg-darkbg border border-darkborder rounded-xl p-4 space-y-3">
+                    <h4 class="text-sm font-bold text-indigo-400">1. Nouvelle Catégorie principale</h4>
+                    <form onsubmit="createCategory(event)" class="space-y-3">
+                        <div class="flex gap-2">
+                            <input type="text" id="new-cat-icon" value="📁" maxlength="4" class="w-14 text-center bg-darkcard border border-darkborder rounded-xl px-2 py-2 text-sm text-white outline-none">
+                            <input type="text" id="new-cat-name" required placeholder="Ex: Géographie, Sport..." class="flex-1 bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl transition">
+                            + Créer la catégorie
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Créer une Sous-catégorie -->
+                <div class="bg-darkbg border border-darkborder rounded-xl p-4 space-y-3">
+                    <h4 class="text-sm font-bold text-emerald-400">2. Nouvelle Sous-catégorie</h4>
+                    <form onsubmit="createCollection(event)" class="space-y-3">
+                        <select id="new-col-cat" required class="w-full bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-emerald-500"></select>
+                        <input type="text" id="new-col-name" required placeholder="Ex: Communes des Vosges" class="w-full bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-emerald-500">
+                        <input type="text" id="new-col-desc" placeholder="Description courte (optionnel)" class="w-full bg-darkcard border border-darkborder rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500">
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2.5 rounded-xl transition">
+                            + Créer la sous-catégorie
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste existante pour suppression -->
+            <div class="mt-6">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Structure actuelle</h4>
+                <div id="admin-structure-list" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
          MODALE 4 : AJOUTER / ÉDITER UNE CARTE MANUELLEMENT (AVEC AUTO-FILL WIKIPEDIA)
          ========================================================================= -->
     <div id="modal-card" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -288,6 +390,11 @@
                         <label class="block text-xs font-medium text-slate-400 mb-1">URL de l'image (Wikimedia)</label>
                         <input type="url" id="card-image" placeholder="https://upload.wikimedia.org/..." class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">UUID Wikimasters (Optionnel — requis pour la synchro JSON auto)</label>
+                    <input type="text" id="card-uuid-input" placeholder="Ex: 550e8400-e29b-41d4-a716-446655440000" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none focus:border-indigo-500">
                 </div>
 
                 <div class="flex items-center gap-6 pt-1">
@@ -365,8 +472,9 @@
             </div>
 
             <div class="bg-darkbg border border-darkborder rounded-xl p-3.5 mb-4 text-xs text-slate-300 space-y-1.5">
-                <p class="font-semibold text-indigo-400">Écris simplement le nom de chaque carte (1 par ligne) :</p>
-                <p class="text-slate-400">L'application va interroger automatiquement Wikipedia FR pour récupérer la photo officielle et calculer la rareté exacte selon les vues mensuelles (<span class="text-slate-200">C &lt; 50, PC 50+, R 250+, SR 1k+, UR 5k+, L 20k+</span>).</p>
+                <p class="font-semibold text-indigo-400">Écris le nom de chaque carte (1 par ligne) OU colle des lignes de cards.ndjson :</p>
+                <p class="text-slate-400">• <strong>Nom simple</strong> (ex: <code>Épinal</code>) : récupère l'image et la rareté via Wikipedia.</p>
+                <p class="text-slate-400">• <strong>Ligne NDJSON</strong> (de ton fichier <code>cards.ndjson</code>) : récupère en plus l'<strong>UUID exact Wikimasters</strong> pour que la synchro JSON coche automatiquement tes cartes !</p>
             </div>
 
             <form onsubmit="saveBulkCards(event)" class="space-y-4">
@@ -808,6 +916,84 @@
                 `;
             }).join('');
         }
+
+        // --- ACTIONS ADMIN : CATÉGORIES & SOUS-CATÉGORIES ---
+        function populateAdminStructureModal() {
+            const select = document.getElementById('new-col-cat');
+            const list = document.getElementById('admin-structure-list');
+            if (!select || !list) return;
+
+            select.innerHTML = categories.map(c => `<option value="${c.id}">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</option>`).join('');
+
+            list.innerHTML = categories.map(cat => {
+                const subCols = collections.filter(col => col.category_id === cat.id);
+                return `
+                    <div class="bg-darkbg border border-darkborder rounded-xl p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-sm text-white">${escapeHtml(cat.icon)} ${escapeHtml(cat.name)}</span>
+                            <button onclick="deleteCategory('${cat.id}')" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded hover:bg-rose-500/10">
+                                <i class="fa-solid fa-trash"></i> Supprimer
+                            </button>
+                        </div>
+                        <div class="mt-2 pl-4 space-y-1">
+                            ${subCols.map(col => `
+                                <div class="flex items-center justify-between text-xs text-slate-400 py-1 border-t border-darkborder/50">
+                                    <span>↳ ${escapeHtml(col.name)}</span>
+                                    <button onclick="deleteCollection('${col.id}')" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            `).join('') || '<div class="text-[11px] text-slate-600 italic">Aucune sous-catégorie</div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function createCategory(e) {
+            e.preventDefault();
+            const icon = document.getElementById('new-cat-icon').value.trim() || '📁';
+            const name = document.getElementById('new-cat-name').value.trim();
+            if (!name) return;
+
+            const { error } = await supabaseClient.from('categories').insert([{ name, icon, sort_order: categories.length }]);
+            if (error) return showToast("Erreur : " + error.message, "error");
+
+            document.getElementById('new-cat-name').value = '';
+            showToast("Catégorie créée !", "success");
+            await loadAllData();
+        }
+
+        async function deleteCategory(id) {
+            const { error } = await supabaseClient.from('categories').delete().eq('id', id);
+            if (error) return showToast("Erreur : " + error.message, "error");
+            if (selectedCategoryId === id) resetNavigation();
+            showToast("Catégorie supprimée.", "info");
+            await loadAllData();
+        }
+
+        async function createCollection(e) {
+            e.preventDefault();
+            const category_id = document.getElementById('new-col-cat').value;
+            const name = document.getElementById('new-col-name').value.trim();
+            const description = document.getElementById('new-col-desc').value.trim();
+            if (!category_id || !name) return;
+
+            const { error } = await supabaseClient.from('collections').insert([{ category_id, name, description, sort_order: collections.length }]);
+            if (error) return showToast("Erreur : " + error.message, "error");
+
+            document.getElementById('new-col-name').value = '';
+            document.getElementById('new-col-desc').value = '';
+            showToast("Sous-catégorie créée !", "success");
+            await loadAllData();
+        }
+
+        async function deleteCollection(id) {
+            const { error } = await supabaseClient.from('collections').delete().eq('id', id);
+            if (error) return showToast("Erreur : " + error.message, "error");
+            if (selectedCollectionId === id) resetNavigation();
+            showToast("Sous-catégorie supprimée.", "info");
+            await loadAllData();
+        }
+
         // --- ACTIONS ADMIN : CARTES & RECHERCHE WIKIPEDIA ---
         function computeRarityFromViews(views) {
             if (views >= 20000) return 'L';
@@ -912,6 +1098,7 @@
             document.getElementById('modal-card-title').textContent = "Ajouter une carte";
             document.getElementById('edit-card-db-id').value = "";
             document.getElementById('card-uuid').value = "";
+            document.getElementById('card-uuid-input').value = "";
             document.getElementById('card-title').value = "";
             document.getElementById('card-rarity').value = "C";
             document.getElementById('card-image').value = "";
@@ -929,6 +1116,7 @@
             document.getElementById('modal-card-title').textContent = "Modifier la carte";
             document.getElementById('edit-card-db-id').value = card.id;
             document.getElementById('card-uuid').value = card.card_id;
+            document.getElementById('card-uuid-input').value = card.card_id;
             document.getElementById('card-title').value = card.title;
             document.getElementById('card-rarity').value = card.rarity;
             document.getElementById('card-image').value = card.image_url || "";
@@ -943,7 +1131,8 @@
             e.preventDefault();
             const dbId = document.getElementById('edit-card-db-id').value;
             const title = document.getElementById('card-title').value.trim();
-            let uuid = document.getElementById('card-uuid').value.trim();
+            const manualUuid = document.getElementById('card-uuid-input').value.trim();
+            let uuid = manualUuid || document.getElementById('card-uuid').value.trim();
 
             if (!uuid) {
                 uuid = crypto.randomUUID ? crypto.randomUUID() : wikiPageIdToUuid(Date.now());
@@ -990,15 +1179,7 @@
             await loadAllData();
         }
 
-        // --- AJOUT EN MASSE / PAR PAQUET ---
-        function openBulkAddModal() {
-            document.getElementById('bulk-cards-input').value = '';
-            document.getElementById('bulk-default-owned').checked = false;
-            document.getElementById('bulk-preview-count').textContent = '0 ligne détectée';
-            document.getElementById('bulk-error-box').classList.add('hidden');
-            openModal('modal-bulk-cards');
-        }
-        // --- AJOUT EN MASSE / PAR LISTE DE NOMS (WIKIPEDIA AUTO) ---
+        // --- AJOUT EN MASSE / PAR LISTE DE NOMS (WIKIPEDIA AUTO OU NDJSON) ---
         function openBulkAddModal() {
             document.getElementById('bulk-cards-input').value = '';
             document.getElementById('bulk-default-owned').checked = false;
@@ -1011,7 +1192,7 @@
         document.addEventListener('input', (e) => {
             if (e.target && e.target.id === 'bulk-cards-input') {
                 const lines = e.target.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                document.getElementById('bulk-preview-count').textContent = `${lines.length} carte${lines.length > 1 ? 's' : ''} à rechercher`;
+                document.getElementById('bulk-preview-count').textContent = `${lines.length} carte${lines.length > 1 ? 's' : ''} détectée${lines.length > 1 ? 's' : ''}`;
             }
         });
 
@@ -1029,23 +1210,46 @@
             const progressBar = document.getElementById('bulk-progress-bar');
 
             errorBox.classList.add('hidden');
-            const names = [...new Set(rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0))];
-            if (names.length === 0) return;
+            const lines = [...new Set(rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0))];
+            if (lines.length === 0) return;
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Recherche Wikipedia...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Traitement en cours...';
             progressWrapper.classList.remove('hidden');
 
             const fetchedCards = [];
             const errors = [];
 
-            // Traitement par petits lots de 5 requêtes simultanées pour rester rapide sans saturer Wikipedia
             const BATCH_SIZE = 5;
-            for (let i = 0; i < names.length; i += BATCH_SIZE) {
-                const batch = names.slice(i, i + BATCH_SIZE);
-                await Promise.all(batch.map(async (name) => {
+            for (let i = 0; i < lines.length; i += BATCH_SIZE) {
+                const batch = lines.slice(i, i + BATCH_SIZE);
+                await Promise.all(batch.map(async (line) => {
+                    // Cas 1 : Ligne JSON issue de cards.ndjson (contient le vrai UUID Wikimasters !)
+                    if (line.startsWith('{')) {
+                        try {
+                            const obj = JSON.parse(line);
+                            const title = obj.title || obj.name;
+                            const uuid = obj.id || obj.card_id;
+                            if (!title || !uuid) throw new Error("Ligne JSON incomplète");
+                            fetchedCards.push({
+                                collection_id: selectedCollectionId,
+                                card_id: uuid,
+                                title: title,
+                                rarity: obj.rarity || 'C',
+                                image_url: obj.image_url || obj.image || null,
+                                is_owned: defaultOwned,
+                                is_shiny: false
+                            });
+                            return;
+                        } catch (err) {
+                            errors.push("JSON invalide : " + line.slice(0, 40) + "...");
+                            return;
+                        }
+                    }
+
+                    // Cas 2 : Simple nom d'article Wikipedia
                     try {
-                        const info = await fetchWikiCardInfo(name);
+                        const info = await fetchWikiCardInfo(line);
                         fetchedCards.push({
                             collection_id: selectedCollectionId,
                             card_id: info.card_id,
@@ -1060,9 +1264,9 @@
                     }
                 }));
 
-                const done = Math.min(i + BATCH_SIZE, names.length);
-                const pct = Math.round((done / names.length) * 100);
-                progressLabel.textContent = `Analyse Wikipedia : ${done} / ${names.length}`;
+                const done = Math.min(i + BATCH_SIZE, lines.length);
+                const pct = Math.round((done / lines.length) * 100);
+                progressLabel.textContent = `Analyse : ${done} / ${lines.length}`;
                 progressPct.textContent = `${pct}%`;
                 progressBar.style.width = `${pct}%`;
             }
