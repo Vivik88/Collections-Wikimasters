@@ -1429,6 +1429,18 @@
                 is_shiny: document.getElementById('card-shiny').checked,
             };
 
+            // Empêcher l'ajout manuel d'un doublon (par UUID ou par titre) dans la même sous-catégorie
+            if (!dbId) {
+                const normTitle = title.toLowerCase();
+                const duplicate = cards.find(c =>
+                    c.collection_id === selectedCollectionId &&
+                    (c.card_id === uuid || c.title.trim().toLowerCase() === normTitle)
+                );
+                if (duplicate) {
+                    return showToast(`"${duplicate.title}" est déjà présente dans cette sous-catégorie !`, "info");
+                }
+            }
+
             let error;
             if (dbId) {
                 ({ error } = await supabaseClient.from('collection_cards').update(payload).eq('id', dbId));
@@ -1555,31 +1567,44 @@
                                 is_shiny: false
                             });
                         } catch (retryErr) {
-                            errors.push(retryErr.message);
+                            errors.push(retryErr.message || `Article introuvable : "${line}"`);
                         }
                     }
                 }));
 
-                const done = Math.min(i + BATCH_SIZE, lines.length);
-                const pct = Math.round((done / lines.length) * 100);
-                progressLabel.textContent = `Analyse : ${done} / ${lines.length}`;
+                const processed = Math.min(i + BATCH_SIZE, lines.length);
+                const pct = Math.round((processed / lines.length) * 100);
+                progressLabel.textContent = `Analyse : ${processed} / ${lines.length}`;
                 progressPct.textContent = `${pct}%`;
                 progressBar.style.width = `${pct}%`;
 
-                // Petite pause entre chaque lot pour éviter le blocage API Wikipedia
                 if (i + BATCH_SIZE < lines.length) {
                     await new Promise(r => setTimeout(r, 250));
                 }
             }
 
-            // Dédupliquer par card_id et ignorer celles déjà présentes dans cette sous-catégorie
-            const existingIdsInCol = new Set(
-                cards.filter(c => c.collection_id === selectedCollectionId).map(c => c.card_id)
-            );
+            // Dédupliquer par card_id ET par titre normalisé (évite les doublons si une carte a déjà son UUID Wikimasters)
+            const existingCardsInCol = cards.filter(c => c.collection_id === selectedCollectionId);
+            const existingIdsInCol = new Set(existingCardsInCol.map(c => c.card_id));
+            const existingTitlesInCol = new Set(existingCardsInCol.map(c => c.title.trim().toLowerCase()));
+
             const seenBatchIds = new Set();
+            const seenBatchTitles = new Set();
+            let skippedDuplicates = 0;
+
             const uniqueNewCards = fetchedCards.filter(c => {
-                if (existingIdsInCol.has(c.card_id) || seenBatchIds.has(c.card_id)) return false;
+                const normTitle = c.title.trim().toLowerCase();
+                if (
+                    existingIdsInCol.has(c.card_id) ||
+                    existingTitlesInCol.has(normTitle) ||
+                    seenBatchIds.has(c.card_id) ||
+                    seenBatchTitles.has(normTitle)
+                ) {
+                    skippedDuplicates++;
+                    return false;
+                }
                 seenBatchIds.add(c.card_id);
+                seenBatchTitles.add(normTitle);
                 return true;
             });
 
@@ -1593,7 +1618,9 @@
                     const CHUNK_SIZE = 200;
                     for (let i = 0; i < uniqueNewCards.length; i += CHUNK_SIZE) {
                         const chunk = uniqueNewCards.slice(i, i + CHUNK_SIZE);
-                        const { error } = await supabaseClient.from('collection_cards').insert(chunk);
+                        const { error } = await supabaseClient
+                            .from('collection_cards')
+                            .upsert(chunk, { onConflict: 'collection_id,card_id', ignoreDuplicates: true });
                         if (error) throw error;
                     }
                     await loadAllData();
@@ -1602,7 +1629,8 @@
                 if (errors.length === 0) {
                     closeModal('modal-bulk-cards');
                 }
-                showToast(`${uniqueNewCards.length} carte(s) ajoutée(s) automatiquement !`, uniqueNewCards.length > 0 ? "success" : "info");
+                const dupMsg = skippedDuplicates > 0 ? ` (${skippedDuplicates} doublon(s) ignoré(s))` : '';
+                showToast(`${uniqueNewCards.length} carte(s) ajoutée(s)${dupMsg} !`, uniqueNewCards.length > 0 ? "success" : "info");
             } catch (err) {
                 console.error(err);
                 errorBox.textContent = "Erreur Supabase : " + err.message;
