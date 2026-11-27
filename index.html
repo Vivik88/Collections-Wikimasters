@@ -280,13 +280,19 @@
 
                 <div class="flex flex-col sm:items-end gap-2">
                     <!-- Boutons Ajouter une carte / Ajout en masse (Admin uniquement + sous-catégorie sélectionnée) -->
-                    <div id="admin-card-actions" class="hidden items-center gap-2">
-                        <button onclick="openBulkAddModal()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-sm font-semibold px-3.5 py-2 rounded-xl transition">
-                            <i class="fa-solid fa-layer-group text-indigo-400"></i> Ajout par paquet
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportCurrentViewCsv()" title="Exporter cette vue en fichier CSV (Excel / Sheets)" class="flex items-center gap-2 bg-darkbg hover:bg-darkhover border border-darkborder text-slate-300 hover:text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl transition">
+                            <i class="fa-solid fa-file-csv text-emerald-400"></i>
+                            <span>Exporter CSV</span>
                         </button>
-                        <button onclick="openAddCardModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/20">
-                            <i class="fa-solid fa-plus"></i> Ajouter une carte
-                        </button>
+                        <div id="admin-card-actions" class="hidden items-center gap-2">
+                            <button onclick="openBulkAddModal()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl transition">
+                                <i class="fa-solid fa-layer-group text-indigo-400"></i> Ajout par paquet
+                            </button>
+                            <button onclick="openAddCardModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                                <i class="fa-solid fa-plus"></i> Ajouter une carte
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Barre de progression de la vue active -->
@@ -306,12 +312,12 @@
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
                     <input type="text" id="filter-search" oninput="renderCards()" placeholder="Rechercher une carte..." class="w-full bg-darkbg border border-darkborder focus:border-indigo-500 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 outline-none transition">
                 </div>
-
-                <!-- Filtre Statut (Toutes / Possédées / Manquantes) -->
-                <div class="flex bg-darkbg p-1 rounded-xl border border-darkborder">
+                <!-- Filtre Statut (Toutes / Possédées / Manquantes / En échange) -->
+                <div class="flex flex-wrap bg-darkbg p-1 rounded-xl border border-darkborder">
                     <button onclick="setStatusFilter('all')" id="tab-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition">Toutes</button>
                     <button onclick="setStatusFilter('owned')" id="tab-owned" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">Possédées</button>
                     <button onclick="setStatusFilter('missing')" id="tab-missing" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">Manquantes</button>
+                    <button onclick="setStatusFilter('trade')" id="tab-trade" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🤝 En échange</button>
                 </div>
 
                 <!-- Filtre Rareté -->
@@ -487,14 +493,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">UUID Wikimasters (Optionnel — requis pour la synchro JSON auto)</label>
-                    <input type="text" id="card-uuid-input" placeholder="Ex: 550e8400-e29b-41d4-a716-446655440000" class="w-full bg-darkbg border border-darkborder rounded-xl px-3 py-2 text-xs font-mono text-slate-300 outline-none focus:border-indigo-500">
-                </div>
-
-                <div class="flex items-center gap-6 pt-1">
+                <div class="flex flex-wrap items-center gap-5 pt-1">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="card-owned" class="w-4 h-4 rounded accent-emerald-500">
                         <span class="text-sm text-slate-200 font-medium">Carte possédée</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="card-trade" class="w-4 h-4 rounded accent-amber-500">
+                        <span class="text-sm text-amber-300 font-medium">🤝 Échange en cours</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="card-shiny" class="w-4 h-4 rounded accent-amber-400">
@@ -503,7 +509,38 @@
                 </div>
 
                 <div class="flex gap-3 pt-3">
-                    <button type="button" onclick="closeModal('modal-card')" class="flex-1 bg-darkbg hover:bg-darkhover border border-darkborder text-slate-300 font-medium py-2.5 rounded-xl transition">
+            <!-- Liste existante pour modification / suppression -->
+            <div class="mt-6">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Structure actuelle (Modifier ou Supprimer)</h4>
+                <div id="admin-structure-list" class="space-y-2.5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE ÉDITION RAPIDE CATÉGORIE / SOUS-CATÉGORIE -->
+    <div id="modal-edit-structure" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-darkcard border border-darkborder rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-darkborder">
+                <h3 id="edit-struct-title" class="font-bold text-lg text-white">Modifier</h3>
+                <button onclick="closeModal('modal-edit-structure')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="submitEditStructure(event)" class="space-y-4">
+                <input type="hidden" id="edit-struct-type">
+                <input type="hidden" id="edit-struct-id">
+                <div id="edit-struct-icon-wrapper">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Icône (Emoji)</label>
+                    <input type="text" id="edit-struct-icon" maxlength="4" class="w-16 text-center bg-darkbg border border-darkborder rounded-xl px-2 py-2 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Nom *</label>
+                    <input type="text" id="edit-struct-name" required class="w-full bg-darkbg border border-darkborder rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div id="edit-struct-desc-wrapper" class="hidden">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Description (optionnel)</label>
+                    <input type="text" id="edit-struct-desc" class="w-full bg-darkbg border border-darkborder rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-indigo-500">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeModal('modal-edit-structure')" class="flex-1 bg-darkbg hover:bg-darkhover border border-darkborder text-slate-300 font-medium py-2.5 rounded-xl transition">
                         Annuler
                     </button>
                     <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition">
@@ -515,7 +552,7 @@
     </div>
 
     <!-- =========================================================================
-         MODALE 5 : SYNCHRONISATION AVEC MA-VITRINE-WIKIMASTERS.JSON
+         MODALE 4 : AJOUTER / ÉDITER UNE CARTE MANUELLEMENT (AVEC AUTO-FILL WIKIPEDIA)
          ========================================================================= -->
     <div id="modal-sync" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-darkcard border border-darkborder rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -1056,10 +1093,15 @@
         }
 
         // --- FILTRAGE & AFFICHAGE DES CARTES ---
+        function isCardInTrade(card) {
+            return card && card.notes === 'TRADE_PENDING';
+        }
+
         function setStatusFilter(status) {
             statusFilter = status;
-            ['all', 'owned', 'missing'].forEach(s => {
+            ['all', 'owned', 'missing', 'trade'].forEach(s => {
                 const btn = document.getElementById(`tab-${s}`);
+                if (!btn) return;
                 if (s === status) {
                     btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white transition";
                 } else {
@@ -1069,6 +1111,34 @@
             renderCards();
         }
 
+        function getCurrentScopedCards() {
+            if (selectedCollectionId) {
+                return cards.filter(c => c.collection_id === selectedCollectionId);
+            }
+            const rawScoped = selectedCategoryId
+                ? cards.filter(c => collections.filter(col => col.category_id === selectedCategoryId).some(col => col.id === c.collection_id))
+                : cards;
+
+            const uniqueMap = new Map();
+            for (const c of rawScoped) {
+                const key = (c.card_id && !c.card_id.startsWith('00000000-0000-4000-8000-'))
+                    ? c.card_id
+                    : c.title.trim().toLowerCase();
+
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, { ...c, _subCount: 1 });
+                } else {
+                    const existing = uniqueMap.get(key);
+                    existing._subCount += 1;
+                    if (c.is_owned) existing.is_owned = true;
+                    if (c.is_shiny) existing.is_shiny = true;
+                    if (isCardInTrade(c)) existing.notes = 'TRADE_PENDING';
+                    if (!existing.image_url && c.image_url) existing.image_url = c.image_url;
+                }
+            }
+            return Array.from(uniqueMap.values());
+        }
+
         function renderCards() {
             const grid = document.getElementById('cards-grid');
             const search = document.getElementById('filter-search').value.toLowerCase().trim();
@@ -1076,33 +1146,7 @@
             const sortBy = document.getElementById('filter-sort').value;
 
             // 1. Filtrer par périmètre (Collection, Catégorie, ou Tout)
-            let scopedCards = cards;
-            if (selectedCollectionId) {
-                scopedCards = cards.filter(c => c.collection_id === selectedCollectionId);
-            } else {
-                const rawScoped = selectedCategoryId
-                    ? cards.filter(c => collections.filter(col => col.category_id === selectedCategoryId).some(col => col.id === c.collection_id))
-                    : cards;
-
-                // Dédupliquer les cartes lorsqu'on affiche une catégorie globale ou "Tout voir"
-                const uniqueMap = new Map();
-                for (const c of rawScoped) {
-                    const key = (c.card_id && !c.card_id.startsWith('00000000-0000-4000-8000-'))
-                        ? c.card_id
-                        : c.title.trim().toLowerCase();
-
-                    if (!uniqueMap.has(key)) {
-                        uniqueMap.set(key, { ...c, _subCount: 1 });
-                    } else {
-                        const existing = uniqueMap.get(key);
-                        existing._subCount += 1;
-                        if (c.is_owned) existing.is_owned = true;
-                        if (c.is_shiny) existing.is_shiny = true;
-                        if (!existing.image_url && c.image_url) existing.image_url = c.image_url;
-                    }
-                }
-                scopedCards = Array.from(uniqueMap.values());
-            }
+            const scopedCards = getCurrentScopedCards();
 
             // Mise à jour de la barre de progression de la vue active
             const viewTotal = scopedCards.length;
@@ -1116,6 +1160,7 @@
                 if (search && !card.title.toLowerCase().includes(search)) return false;
                 if (statusFilter === 'owned' && !card.is_owned) return false;
                 if (statusFilter === 'missing' && card.is_owned) return false;
+                if (statusFilter === 'trade' && !isCardInTrade(card)) return false;
                 if (rarityFilter !== 'ALL' && card.rarity !== rarityFilter) return false;
                 return true;
             });
@@ -1147,10 +1192,13 @@
                 const colObj = collections.find(c => c.id === card.collection_id);
                 const fallbackImg = `https://placehold.co/300x400/131822/64748b?text=${encodeURIComponent(card.title)}`;
                 const imgSrc = card.image_url || fallbackImg;
-                const rarityBorderClass = card.is_owned ? `border-2 border-rarity-${card.rarity}` : 'border border-darkborder';
+                const inTrade = isCardInTrade(card);
+                const rarityBorderClass = card.is_owned
+                    ? `border-2 border-rarity-${card.rarity}`
+                    : (inTrade ? 'border-2 border-amber-500/80' : 'border border-darkborder');
 
                 return `
-                    <div class="group relative bg-darkcard ${rarityBorderClass} rounded-2xl overflow-hidden flex flex-col transition duration-300 hover:-translate-y-1 ${card.is_owned ? (card.is_shiny ? 'shiny-card' : 'shadow-lg') : 'opacity-50 grayscale hover:opacity-80'}">
+                    <div class="group relative bg-darkcard ${rarityBorderClass} rounded-2xl overflow-hidden flex flex-col transition duration-300 hover:-translate-y-1 ${card.is_owned ? (card.is_shiny ? 'shiny-card' : 'shadow-lg') : (inTrade ? 'opacity-90' : 'opacity-50 grayscale hover:opacity-80')}">
                         
                         <!-- Image de la carte -->
                         <div class="relative aspect-[3/4] bg-slate-900 overflow-hidden">
@@ -1164,9 +1212,10 @@
                                 ${escapeHtml(card.rarity)}
                             </span>
 
-                            <!-- Statut Possédée / Shiny (Haut Droite) -->
+                            <!-- Statut Possédée / Échange / Shiny (Haut Droite) -->
                             <div class="absolute top-2 right-2 flex items-center gap-1">
                                 ${card.is_shiny ? '<span title="Brillante (Shiny)" class="w-6 h-6 rounded-full bg-amber-400/90 text-slate-950 flex items-center justify-center text-xs shadow">✨</span>' : ''}
+                                ${inTrade && !card.is_owned ? '<span title="Demande d\'échange en cours" class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-xs shadow"><i class="fa-solid fa-handshake"></i></span>' : ''}
                                 ${card.is_owned 
                                     ? '<span title="Possédée" class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow"><i class="fa-solid fa-check"></i></span>'
                                     : '<span title="Manquante" class="w-6 h-6 rounded-full bg-slate-900/80 border border-slate-700 text-slate-400 flex items-center justify-center text-xs"><i class="fa-solid fa-xmark"></i></span>'
@@ -1175,14 +1224,17 @@
 
                             <!-- Boutons rapides Admin au survol -->
                             ${isAdmin ? `
-                                <div class="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition z-10">
-                                    <button onclick="toggleCardOwned('${card.id}', ${!card.is_owned})" title="${card.is_owned ? 'Marquer manquante' : 'Marquer possédée'}" class="px-2.5 py-1.5 rounded-lg text-xs font-bold shadow ${card.is_owned ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-emerald-600 text-white hover:bg-emerald-500'}">
+                                <div class="absolute inset-x-1.5 bottom-2 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition z-10">
+                                    <button onclick="toggleCardOwned('${card.id}', ${!card.is_owned})" title="${card.is_owned ? 'Marquer manquante' : 'Marquer possédée'}" class="px-2 py-1.5 rounded-lg text-xs font-bold shadow ${card.is_owned ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-emerald-600 text-white hover:bg-emerald-500'}">
                                         <i class="fa-solid ${card.is_owned ? 'fa-rotate-left' : 'fa-check'}"></i>
                                     </button>
-                                    <button onclick="openEditCardModal('${card.id}')" title="Modifier" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow">
+                                    <button onclick="toggleCardTrade('${card.id}', ${!inTrade})" title="${inTrade ? 'Retirer échange en cours' : 'Marquer échange en cours'}" class="px-2 py-1.5 rounded-lg text-xs font-bold shadow ${inTrade ? 'bg-amber-500 text-slate-950 hover:bg-amber-400' : 'bg-slate-800 text-amber-300 hover:bg-slate-700'}">
+                                        <i class="fa-solid fa-handshake"></i>
+                                    </button>
+                                    <button onclick="openEditCardModal('${card.id}')" title="Modifier" class="px-2 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
-                                    <button onclick="deleteCard('${card.id}')" title="Supprimer" class="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow">
+                                    <button onclick="deleteCard('${card.id}')" title="Supprimer" class="px-2 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>
@@ -1193,10 +1245,56 @@
                         <div class="p-2.5 flex-1 flex flex-col justify-center">
                             ${!selectedCollectionId ? `<div class="text-[10px] font-semibold text-indigo-400 truncate mb-0.5">${card._subCount > 1 ? `Dans ${card._subCount} sous-collections` : (colObj ? escapeHtml(colObj.name) : '')}</div>` : ''}
                             <h3 class="font-bold text-xs sm:text-sm text-white leading-snug line-clamp-2" title="${escapeHtml(card.title)}">${escapeHtml(card.title)}</h3>
+                            ${inTrade && !card.is_owned ? '<span class="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold text-amber-400"><i class="fa-solid fa-handshake"></i> Échange en cours</span>' : ''}
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        // --- EXPORT CSV DE LA VUE / CATÉGORIE ACTIVE ---
+        function exportCurrentViewCsv() {
+            const scopedCards = getCurrentScopedCards();
+            if (scopedCards.length === 0) {
+                return showToast("Aucune carte à exporter dans cette vue.", "info");
+            }
+
+            const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+            const headers = ['Titre', 'Rareté', 'Catégorie', 'Sous-catégorie', 'Possédée', 'Échange en cours', 'Shiny', 'UUID Wikimasters'];
+
+            const rows = scopedCards
+                .slice()
+                .sort((a, b) => a.title.localeCompare(b.title))
+                .map(card => {
+                    const col = collections.find(c => c.id === card.collection_id);
+                    const cat = categories.find(c => c.id === col?.category_id);
+                    return [
+                        escapeCsv(card.title),
+                        escapeCsv(card.rarity),
+                        escapeCsv(cat ? cat.name : ''),
+                        escapeCsv(col ? col.name : ''),
+                        escapeCsv(card.is_owned ? 'Oui' : 'Non'),
+                        escapeCsv(isCardInTrade(card) ? 'Oui' : 'Non'),
+                        escapeCsv(card.is_shiny ? 'Oui' : 'Non'),
+                        escapeCsv(card.card_id || '')
+                    ].join(';');
+                });
+
+            // BOM UTF-8 (\uFEFF) pour une ouverture parfaite des accents sous Excel & Google Sheets
+            const csvContent = '\uFEFF' + [headers.map(escapeCsv).join(';'), ...rows].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const viewName = document.getElementById('view-title').textContent.trim().replace(/[^a-zA-Z0-9À-ÿ_-]+/g, '_');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wikimasters_${viewName.toLowerCase()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+
+            showToast(`${scopedCards.length} carte(s) exportée(s) en CSV !`, "success");
         }
 
         // --- ACTIONS ADMIN : CATÉGORIES & SOUS-CATÉGORIES ---
@@ -1211,23 +1309,80 @@
                 const subCols = collections.filter(col => col.category_id === cat.id);
                 return `
                     <div class="bg-darkbg border border-darkborder rounded-xl p-3">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between gap-2">
                             <span class="font-bold text-sm text-white">${escapeHtml(cat.icon)} ${escapeHtml(cat.name)}</span>
-                            <button onclick="deleteCategory('${cat.id}')" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded hover:bg-rose-500/10">
-                                <i class="fa-solid fa-trash"></i> Supprimer
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button onclick="openEditStructureModal('category', '${cat.id}')" class="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 rounded hover:bg-indigo-500/10">
+                                    <i class="fa-solid fa-pen"></i> Modifier
+                                </button>
+                                <button onclick="deleteCategory('${cat.id}')" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded hover:bg-rose-500/10">
+                                    <i class="fa-solid fa-trash"></i> Supprimer
+                                </button>
+                            </div>
                         </div>
                         <div class="mt-2 pl-4 space-y-1">
                             ${subCols.map(col => `
                                 <div class="flex items-center justify-between text-xs text-slate-400 py-1 border-t border-darkborder/50">
                                     <span>↳ ${escapeHtml(col.name)}</span>
-                                    <button onclick="deleteCollection('${col.id}')" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="openEditStructureModal('collection', '${col.id}')" title="Modifier" class="text-indigo-400 hover:text-indigo-300"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="deleteCollection('${col.id}')" title="Supprimer" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
                                 </div>
                             `).join('') || '<div class="text-[11px] text-slate-600 italic">Aucune sous-catégorie</div>'}
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function openEditStructureModal(type, id) {
+            document.getElementById('edit-struct-type').value = type;
+            document.getElementById('edit-struct-id').value = id;
+
+            const iconWrap = document.getElementById('edit-struct-icon-wrapper');
+            const descWrap = document.getElementById('edit-struct-desc-wrapper');
+
+            if (type === 'category') {
+                const cat = categories.find(c => c.id === id);
+                if (!cat) return;
+                document.getElementById('edit-struct-title').textContent = 'Modifier la catégorie';
+                document.getElementById('edit-struct-icon').value = cat.icon || '📁';
+                document.getElementById('edit-struct-name').value = cat.name;
+                iconWrap.classList.remove('hidden');
+                descWrap.classList.add('hidden');
+            } else {
+                const col = collections.find(c => c.id === id);
+                if (!col) return;
+                document.getElementById('edit-struct-title').textContent = 'Modifier la sous-catégorie';
+                document.getElementById('edit-struct-name').value = col.name;
+                document.getElementById('edit-struct-desc').value = col.description || '';
+                iconWrap.classList.add('hidden');
+                descWrap.classList.remove('hidden');
+            }
+            openModal('modal-edit-structure');
+        }
+
+        async function submitEditStructure(e) {
+            e.preventDefault();
+            const type = document.getElementById('edit-struct-type').value;
+            const id = document.getElementById('edit-struct-id').value;
+            const name = document.getElementById('edit-struct-name').value.trim();
+            if (!name) return;
+
+            let error;
+            if (type === 'category') {
+                const icon = document.getElementById('edit-struct-icon').value.trim() || '📁';
+                ({ error } = await supabaseClient.from('categories').update({ name, icon }).eq('id', id));
+            } else {
+                const description = document.getElementById('edit-struct-desc').value.trim() || null;
+                ({ error } = await supabaseClient.from('collections').update({ name, description }).eq('id', id));
+            }
+
+            if (error) return showToast("Erreur : " + error.message, "error");
+            closeModal('modal-edit-structure');
+            showToast("Modifications enregistrées !", "success");
+            await loadAllData();
         }
 
         async function createCategory(e) {
@@ -1385,6 +1540,7 @@
             document.getElementById('card-rarity').value = "C";
             document.getElementById('card-image').value = "";
             document.getElementById('card-owned').checked = false;
+            document.getElementById('card-trade').checked = false;
             document.getElementById('card-shiny').checked = false;
             document.getElementById('single-wiki-status').textContent = 'Clique sur "Auto-remplir" pour récupérer l\'image et calculer la rareté via les vues mensuelles.';
             document.getElementById('single-wiki-status').className = "text-[11px] text-slate-500 mt-1";
@@ -1403,6 +1559,7 @@
             document.getElementById('card-rarity').value = card.rarity;
             document.getElementById('card-image').value = card.image_url || "";
             document.getElementById('card-owned').checked = !!card.is_owned;
+            document.getElementById('card-trade').checked = isCardInTrade(card);
             document.getElementById('card-shiny').checked = !!card.is_shiny;
             document.getElementById('single-wiki-status').textContent = 'Tu peux cliquer sur "Auto-remplir" pour actualiser l\'image ou la rareté.';
             document.getElementById('single-wiki-status').className = "text-[11px] text-slate-500 mt-1";
@@ -1420,13 +1577,17 @@
                 uuid = crypto.randomUUID ? crypto.randomUUID() : wikiPageIdToUuid(Date.now());
             }
 
+            const isOwned = document.getElementById('card-owned').checked;
+            const inTrade = !isOwned && document.getElementById('card-trade').checked;
+
             const payload = {
                 card_id: uuid,
                 title: title,
                 rarity: document.getElementById('card-rarity').value,
                 image_url: document.getElementById('card-image').value.trim() || null,
-                is_owned: document.getElementById('card-owned').checked,
+                is_owned: isOwned,
                 is_shiny: document.getElementById('card-shiny').checked,
+                notes: inTrade ? 'TRADE_PENDING' : null,
             };
 
             // Empêcher l'ajout manuel d'un doublon (par UUID ou par titre) dans la même sous-catégorie
@@ -1457,12 +1618,28 @@
         }
 
         async function toggleCardOwned(dbId, newState) {
+            const targetCard = cards.find(c => c.id === dbId);
+            const patch = { is_owned: newState };
+            if (newState && isCardInTrade(targetCard)) {
+                patch.notes = null; // Retire automatiquement "échange en cours" une fois la carte obtenue
+            }
             const { error } = await supabaseClient
                 .from('collection_cards')
-                .update({ is_owned: newState })
+                .update(patch)
                 .eq('id', dbId);
 
             if (error) return showToast("Erreur : " + error.message, "error");
+            await loadAllData();
+        }
+
+        async function toggleCardTrade(dbId, newTradeState) {
+            const { error } = await supabaseClient
+                .from('collection_cards')
+                .update({ notes: newTradeState ? 'TRADE_PENDING' : null })
+                .eq('id', dbId);
+
+            if (error) return showToast("Erreur : " + error.message, "error");
+            showToast(newTradeState ? "🤝 Marquée en échange en cours" : "Statut d'échange retiré", "info");
             await loadAllData();
         }
 
@@ -1697,7 +1874,8 @@
                             const patch = {
                                 is_owned: true,
                                 is_shiny: dbCard.is_shiny || !!match.shiny,
-                                obtained_at: match.obtained_at || dbCard.obtained_at
+                                obtained_at: match.obtained_at || dbCard.obtained_at,
+                                notes: isCardInTrade(dbCard) ? null : dbCard.notes
                             };
                             if (needsUuidSync) patch.card_id = match.card_id;
                             if (match.rarity) patch.rarity = match.rarity;
